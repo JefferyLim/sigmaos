@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option go_package = "sigmaos/auth_server";
+
+service AuthService {
+  rpc Auth(AuthRequest) returns (AuthResult);
+}
+
+message AuthRequest {
+  string text = 1;
+}
+
+message AuthResult {
+  string text = 1;
+}

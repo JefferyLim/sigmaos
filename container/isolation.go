@@ -81,7 +81,7 @@ func finishIsolation() {
 func jailProcess() error {
 	newRoot := jailPath(proc.GetPid())
 	// Create directories to use as mount points, as well as the new root directory itself.
-	for _, d := range []string{"", OLD_ROOT_MNT, "lib", "usr", "lib64", "etc", "sys", "dev", "proc", "seccomp", "bin", "bin2", "tmp", perf.OUTPUT_PATH, "cgroup"} {
+	for _, d := range []string{"", OLD_ROOT_MNT, "lib", "usr", "lib64", "etc", "sys", "dev", "proc", "seccomp", "bin", "bin2", "tmp", perf.OUTPUT_PATH, "cgroup", "keys"} {
 		if err := os.Mkdir(path.Join(newRoot, d), 0700); err != nil {
 			db.DPrintf(db.ALWAYS, "failed to mkdir [%v]: %v", d, err)
 			return err
@@ -132,6 +132,12 @@ func jailProcess() error {
 		db.DPrintf(db.ALWAYS, "failed to mount cgroup: %v", err)
 		return err
 	}
+
+    if err := syscall.Mount(path.Join(sp.SIGMAHOME, "keys"), "keys", "none", syscall.MS_BIND|syscall.MS_RDONLY, ""); err != nil {
+        db.DPrintf(db.ALWAYS, "failed to mount keys: %v", err)
+        return err
+    }
+
 	// Mount perf dir (remove starting first slash)
 	if err := syscall.Mount(perf.OUTPUT_PATH, perf.OUTPUT_PATH[1:], "none", syscall.MS_BIND, ""); err != nil {
 		db.DPrintf(db.ALWAYS, "failed to mount perfoutput: %v", err)

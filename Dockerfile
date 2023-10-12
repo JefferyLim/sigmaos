@@ -23,6 +23,7 @@ RUN mkdir bin && \
     mkdir bin/linux
 # Copy some yaml files to the base image.
 COPY seccomp seccomp
+COPY keys keys
 ENV SIGMATAG=$tag
 
 # ========== user image ==========
