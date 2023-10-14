@@ -116,6 +116,8 @@ const (
 	MONGO                    = "MONGO"
 	MONGO_ERR                = "MONGO_ERR"
 	PROXY                    = "PROXY"
+    AUTHSRV                  = "AUTHSRV"
+    AUTHSRV_ERR              = "AUTHSRV" + ERR
 )
 
 // Realm
@@ -231,4 +233,9 @@ const (
 // Transport
 const (
 	FRAME Tselector = "FRAME"
+)
+
+// Jeff
+const (
+    JEFF Tselector = "JEFF"
 )

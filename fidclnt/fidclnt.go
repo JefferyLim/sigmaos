@@ -9,6 +9,7 @@ import (
 	"sigmaos/serr"
 	"sigmaos/sessp"
 	sp "sigmaos/sigmap"
+    "sigmaos/proc"
 )
 
 //
@@ -94,7 +95,15 @@ func (fidc *FidClnt) Clunk(fid sp.Tfid) *serr.Err {
 
 func (fidc *FidClnt) Attach(uname sp.Tuname, cid sp.TclntId, addrs sp.Taddrs, pn, tree string) (sp.Tfid, *serr.Err) {
 	fid := fidc.allocFid()
-	reply, err := fidc.pc.Attach(addrs, uname, cid, fid, path.Split(tree))
+    db.DPrintf(db.JEFF, "fidclnt: fid %d, uname %v, pn %v", fid, uname, pn)
+    
+    db.DPrintf(db.JEFF, "priv: %t", proc.GetIsPrivilegedProc())
+    afid := sp.Tfid(1)
+    if proc.GetIsPrivilegedProc() == true {
+        afid = sp.NoFid
+    }
+
+	reply, err := fidc.pc.Attach(addrs, uname, cid, fid, afid, path.Split(tree))
 	if err != nil {
 		db.DPrintf(db.FIDCLNT_ERR, "Error attach %v: %v", addrs, err)
 		fidc.freeFid(fid)

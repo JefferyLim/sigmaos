@@ -51,8 +51,8 @@ func (clnt *Clnt) CallServer(addrs sp.Taddrs, args sessp.Tmsg, data []byte) (*se
 	return reply, nil
 }
 
-func (clnt *Clnt) Attach(addrs sp.Taddrs, uname sp.Tuname, cid sp.TclntId, fid sp.Tfid, path path.Path) (*sp.Rattach, *serr.Err) {
-	args := sp.MkTattach(fid, sp.NoFid, uname, cid, path)
+func (clnt *Clnt) Attach(addrs sp.Taddrs, uname sp.Tuname, cid sp.TclntId, fid sp.Tfid, afid sp.Tfid, path path.Path) (*sp.Rattach, *serr.Err) {
+	args := sp.MkTattach(fid, afid, uname, cid, path)
 	reply, err := clnt.CallServer(addrs, args, nil)
 	if err != nil {
 		return nil, err
