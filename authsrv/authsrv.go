@@ -24,7 +24,7 @@ func RunAuthSrv(public bool) error {
 	authsrv := &AuthSrv{rand.String(8)}
 	db.DPrintf(db.AUTHSRV, "==%v== Creating auth server \n", authsrv.sid)
 
-    ssrv, err := sigmasrv.MakeSigmaSrvPublic(sp.AUTHSRV, authsrv, sp.AUTHSRV, true)
+    ssrv, err := sigmasrv.MakeSigmaSrv(sp.AUTHSRV, authsrv, sp.AUTHSRV)
 	if err != nil {
         db.DPrintf(db.AUTHSRV, "%v", err)
 	}
