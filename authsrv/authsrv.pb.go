@@ -20,7 +20,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type AuthRequest struct {
+type EchoRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -28,10 +28,106 @@ type AuthRequest struct {
 	Text string `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
 }
 
+func (x *EchoRequest) Reset() {
+	*x = EchoRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_authsrv_proto_msgTypes[0]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *EchoRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EchoRequest) ProtoMessage() {}
+
+func (x *EchoRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_authsrv_proto_msgTypes[0]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EchoRequest.ProtoReflect.Descriptor instead.
+func (*EchoRequest) Descriptor() ([]byte, []int) {
+	return file_authsrv_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *EchoRequest) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+type EchoResult struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Text string `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
+}
+
+func (x *EchoResult) Reset() {
+	*x = EchoResult{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_authsrv_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *EchoResult) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EchoResult) ProtoMessage() {}
+
+func (x *EchoResult) ProtoReflect() protoreflect.Message {
+	mi := &file_authsrv_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EchoResult.ProtoReflect.Descriptor instead.
+func (*EchoResult) Descriptor() ([]byte, []int) {
+	return file_authsrv_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *EchoResult) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+type AuthRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Fid   uint32 `protobuf:"varint,1,opt,name=fid,proto3" json:"fid,omitempty"`
+	Uname string `protobuf:"bytes,2,opt,name=uname,proto3" json:"uname,omitempty"`
+	Aname string `protobuf:"bytes,3,opt,name=aname,proto3" json:"aname,omitempty"`
+}
+
 func (x *AuthRequest) Reset() {
 	*x = AuthRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_authsrv_proto_msgTypes[0]
+		mi := &file_authsrv_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -44,7 +140,7 @@ func (x *AuthRequest) String() string {
 func (*AuthRequest) ProtoMessage() {}
 
 func (x *AuthRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_authsrv_proto_msgTypes[0]
+	mi := &file_authsrv_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -57,12 +153,26 @@ func (x *AuthRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuthRequest.ProtoReflect.Descriptor instead.
 func (*AuthRequest) Descriptor() ([]byte, []int) {
-	return file_authsrv_proto_rawDescGZIP(), []int{0}
+	return file_authsrv_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *AuthRequest) GetText() string {
+func (x *AuthRequest) GetFid() uint32 {
 	if x != nil {
-		return x.Text
+		return x.Fid
+	}
+	return 0
+}
+
+func (x *AuthRequest) GetUname() string {
+	if x != nil {
+		return x.Uname
+	}
+	return ""
+}
+
+func (x *AuthRequest) GetAname() string {
+	if x != nil {
+		return x.Aname
 	}
 	return ""
 }
@@ -72,13 +182,13 @@ type AuthResult struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Text string `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
+	Afid uint32 `protobuf:"varint,1,opt,name=afid,proto3" json:"afid,omitempty"`
 }
 
 func (x *AuthResult) Reset() {
 	*x = AuthResult{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_authsrv_proto_msgTypes[1]
+		mi := &file_authsrv_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -91,7 +201,7 @@ func (x *AuthResult) String() string {
 func (*AuthResult) ProtoMessage() {}
 
 func (x *AuthResult) ProtoReflect() protoreflect.Message {
-	mi := &file_authsrv_proto_msgTypes[1]
+	mi := &file_authsrv_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -104,30 +214,167 @@ func (x *AuthResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuthResult.ProtoReflect.Descriptor instead.
 func (*AuthResult) Descriptor() ([]byte, []int) {
-	return file_authsrv_proto_rawDescGZIP(), []int{1}
+	return file_authsrv_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *AuthResult) GetText() string {
+func (x *AuthResult) GetAfid() uint32 {
 	if x != nil {
-		return x.Text
+		return x.Afid
+	}
+	return 0
+}
+
+type ValidRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Afid  uint32 `protobuf:"varint,1,opt,name=afid,proto3" json:"afid,omitempty"`
+	Fid   uint32 `protobuf:"varint,2,opt,name=fid,proto3" json:"fid,omitempty"`
+	Uname string `protobuf:"bytes,3,opt,name=uname,proto3" json:"uname,omitempty"`
+	Aname string `protobuf:"bytes,4,opt,name=aname,proto3" json:"aname,omitempty"`
+}
+
+func (x *ValidRequest) Reset() {
+	*x = ValidRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_authsrv_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ValidRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ValidRequest) ProtoMessage() {}
+
+func (x *ValidRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_authsrv_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ValidRequest.ProtoReflect.Descriptor instead.
+func (*ValidRequest) Descriptor() ([]byte, []int) {
+	return file_authsrv_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ValidRequest) GetAfid() uint32 {
+	if x != nil {
+		return x.Afid
+	}
+	return 0
+}
+
+func (x *ValidRequest) GetFid() uint32 {
+	if x != nil {
+		return x.Fid
+	}
+	return 0
+}
+
+func (x *ValidRequest) GetUname() string {
+	if x != nil {
+		return x.Uname
 	}
 	return ""
+}
+
+func (x *ValidRequest) GetAname() string {
+	if x != nil {
+		return x.Aname
+	}
+	return ""
+}
+
+type ValidResult struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Ok bool `protobuf:"varint,1,opt,name=ok,proto3" json:"ok,omitempty"`
+}
+
+func (x *ValidResult) Reset() {
+	*x = ValidResult{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_authsrv_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ValidResult) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ValidResult) ProtoMessage() {}
+
+func (x *ValidResult) ProtoReflect() protoreflect.Message {
+	mi := &file_authsrv_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ValidResult.ProtoReflect.Descriptor instead.
+func (*ValidResult) Descriptor() ([]byte, []int) {
+	return file_authsrv_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ValidResult) GetOk() bool {
+	if x != nil {
+		return x.Ok
+	}
+	return false
 }
 
 var File_authsrv_proto protoreflect.FileDescriptor
 
 var file_authsrv_proto_rawDesc = []byte{
 	0x0a, 0x0d, 0x61, 0x75, 0x74, 0x68, 0x73, 0x72, 0x76, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22,
-	0x21, 0x0a, 0x0b, 0x41, 0x75, 0x74, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x12,
+	0x21, 0x0a, 0x0b, 0x45, 0x63, 0x68, 0x6f, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x12,
 	0x0a, 0x04, 0x74, 0x65, 0x78, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x74, 0x65,
-	0x78, 0x74, 0x22, 0x20, 0x0a, 0x0a, 0x41, 0x75, 0x74, 0x68, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74,
+	0x78, 0x74, 0x22, 0x20, 0x0a, 0x0a, 0x45, 0x63, 0x68, 0x6f, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74,
 	0x12, 0x12, 0x0a, 0x04, 0x74, 0x65, 0x78, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04,
-	0x74, 0x65, 0x78, 0x74, 0x32, 0x30, 0x0a, 0x0b, 0x41, 0x75, 0x74, 0x68, 0x53, 0x65, 0x72, 0x76,
-	0x69, 0x63, 0x65, 0x12, 0x21, 0x0a, 0x04, 0x41, 0x75, 0x74, 0x68, 0x12, 0x0c, 0x2e, 0x41, 0x75,
-	0x74, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x0b, 0x2e, 0x41, 0x75, 0x74, 0x68,
-	0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x42, 0x11, 0x5a, 0x0f, 0x73, 0x69, 0x67, 0x6d, 0x61, 0x6f,
-	0x73, 0x2f, 0x61, 0x75, 0x74, 0x68, 0x73, 0x72, 0x76, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x33,
+	0x74, 0x65, 0x78, 0x74, 0x22, 0x4b, 0x0a, 0x0b, 0x41, 0x75, 0x74, 0x68, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x12, 0x10, 0x0a, 0x03, 0x66, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d,
+	0x52, 0x03, 0x66, 0x69, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x75, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x75, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x61,
+	0x6e, 0x61, 0x6d, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x61, 0x6e, 0x61, 0x6d,
+	0x65, 0x22, 0x20, 0x0a, 0x0a, 0x41, 0x75, 0x74, 0x68, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x12,
+	0x12, 0x0a, 0x04, 0x61, 0x66, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x04, 0x61,
+	0x66, 0x69, 0x64, 0x22, 0x60, 0x0a, 0x0c, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x61, 0x66, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x0d, 0x52, 0x04, 0x61, 0x66, 0x69, 0x64, 0x12, 0x10, 0x0a, 0x03, 0x66, 0x69, 0x64, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x0d, 0x52, 0x03, 0x66, 0x69, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x75, 0x6e, 0x61,
+	0x6d, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x75, 0x6e, 0x61, 0x6d, 0x65, 0x12,
+	0x14, 0x0a, 0x05, 0x61, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05,
+	0x61, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x1d, 0x0a, 0x0b, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x52, 0x65,
+	0x73, 0x75, 0x6c, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x6f, 0x6b, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08,
+	0x52, 0x02, 0x6f, 0x6b, 0x32, 0x7c, 0x0a, 0x0b, 0x41, 0x75, 0x74, 0x68, 0x53, 0x65, 0x72, 0x76,
+	0x69, 0x63, 0x65, 0x12, 0x21, 0x0a, 0x04, 0x45, 0x63, 0x68, 0x6f, 0x12, 0x0c, 0x2e, 0x45, 0x63,
+	0x68, 0x6f, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x0b, 0x2e, 0x45, 0x63, 0x68, 0x6f,
+	0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x12, 0x21, 0x0a, 0x04, 0x41, 0x75, 0x74, 0x68, 0x12, 0x0c,
+	0x2e, 0x41, 0x75, 0x74, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x0b, 0x2e, 0x41,
+	0x75, 0x74, 0x68, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x12, 0x27, 0x0a, 0x08, 0x56, 0x61, 0x6c,
+	0x69, 0x64, 0x61, 0x74, 0x65, 0x12, 0x0d, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x0c, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x52, 0x65, 0x73, 0x75,
+	0x6c, 0x74, 0x42, 0x11, 0x5a, 0x0f, 0x73, 0x69, 0x67, 0x6d, 0x61, 0x6f, 0x73, 0x2f, 0x61, 0x75,
+	0x74, 0x68, 0x73, 0x72, 0x76, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -142,16 +389,24 @@ func file_authsrv_proto_rawDescGZIP() []byte {
 	return file_authsrv_proto_rawDescData
 }
 
-var file_authsrv_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_authsrv_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_authsrv_proto_goTypes = []interface{}{
-	(*AuthRequest)(nil), // 0: AuthRequest
-	(*AuthResult)(nil),  // 1: AuthResult
+	(*EchoRequest)(nil),  // 0: EchoRequest
+	(*EchoResult)(nil),   // 1: EchoResult
+	(*AuthRequest)(nil),  // 2: AuthRequest
+	(*AuthResult)(nil),   // 3: AuthResult
+	(*ValidRequest)(nil), // 4: ValidRequest
+	(*ValidResult)(nil),  // 5: ValidResult
 }
 var file_authsrv_proto_depIdxs = []int32{
-	0, // 0: AuthService.Auth:input_type -> AuthRequest
-	1, // 1: AuthService.Auth:output_type -> AuthResult
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	0, // 0: AuthService.Echo:input_type -> EchoRequest
+	2, // 1: AuthService.Auth:input_type -> AuthRequest
+	4, // 2: AuthService.Validate:input_type -> ValidRequest
+	1, // 3: AuthService.Echo:output_type -> EchoResult
+	3, // 4: AuthService.Auth:output_type -> AuthResult
+	5, // 5: AuthService.Validate:output_type -> ValidResult
+	3, // [3:6] is the sub-list for method output_type
+	0, // [0:3] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -164,7 +419,7 @@ func file_authsrv_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_authsrv_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AuthRequest); i {
+			switch v := v.(*EchoRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -176,7 +431,55 @@ func file_authsrv_proto_init() {
 			}
 		}
 		file_authsrv_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*EchoResult); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_authsrv_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AuthRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_authsrv_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*AuthResult); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_authsrv_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ValidRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_authsrv_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ValidResult); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -194,7 +497,7 @@ func file_authsrv_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_authsrv_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
