@@ -303,6 +303,14 @@ func (w *Twalk) Tnewfid() Tfid {
 	return Tfid(w.NewFid)
 }
 
+func MkTauth(afid Tfid, uname Tuname, path path.Path) *Tauth {
+    return &Tauth{Afid: uint32(afid),  Uname: string(uname), Aname: path.String()}
+}
+
+func (a *Tauth) Tuname() Tuname {
+    return Tuname(a.Uname)
+}
+
 func MkTattach(fid, afid Tfid, uname Tuname, cid TclntId, path path.Path) *Tattach {
 	return &Tattach{Fid: uint32(fid), Afid: uint32(afid), Uname: string(uname), Aname: path.String(), ClntId: uint64(cid)}
 }

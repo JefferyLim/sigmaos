@@ -51,6 +51,19 @@ func (clnt *Clnt) CallServer(addrs sp.Taddrs, args sessp.Tmsg, data []byte) (*se
 	return reply, nil
 }
 
+func (clnt *Clnt) Auth(addrs sp.Taddrs, uname sp.Tuname, fid sp.Tfid, path path.Path)(*sp.Rauth, *serr.Err) {
+    args := sp.MkTauth(fid, uname, path)
+    reply, err := clnt.CallServer(addrs, args, nil)
+    if err != nil {
+        return nil, err
+    }
+    msg, ok := reply.Msg.(*sp.Rauth)
+    if !ok {
+        return nil, serr.MkErr(serr.TErrBadFcall, "clnt")
+    }
+    return msg, nil
+}
+
 func (clnt *Clnt) Attach(addrs sp.Taddrs, uname sp.Tuname, cid sp.TclntId, fid sp.Tfid, afid sp.Tfid, path path.Path) (*sp.Rattach, *serr.Err) {
 	args := sp.MkTattach(fid, afid, uname, cid, path)
 	reply, err := clnt.CallServer(addrs, args, nil)

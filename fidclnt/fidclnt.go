@@ -93,10 +93,27 @@ func (fidc *FidClnt) Clunk(fid sp.Tfid) *serr.Err {
 	return nil
 }
 
+func (fidc *FidClnt) Auth(afid sp.Tfid, uname sp.Tuname, addrs sp.Taddrs, tree string) (sp.Tfid, *serr.Err){
+    reply, err := fidc.pc.Auth(addrs, uname, afid, path.Split(tree))
+    if err != nil {
+        db.DPrintf(db.FIDCLNT_ERR, "Error auth %v: %v", addrs, err)
+        return sp.NoFid, err
+    }
+
+    db.DPrintf(db.JEFF, "fidclnt/Auth %d", reply.Aqid)
+
+    return sp.Tfid(reply.Aqid), nil
+}
+
+
 func (fidc *FidClnt) Attach(uname sp.Tuname, cid sp.TclntId, addrs sp.Taddrs, pn, tree string) (sp.Tfid, *serr.Err) {
 	fid := fidc.allocFid()
     db.DPrintf(db.JEFF, "fidclnt: fid %d, uname %v, pn %v", fid, uname, pn)
     
+    
+    _, err := fidc.Auth(fid, uname, addrs, tree)
+
+
     db.DPrintf(db.JEFF, "priv: %t", proc.GetIsPrivilegedProc())
     afid := sp.Tfid(1)
     if proc.GetIsPrivilegedProc() == true {

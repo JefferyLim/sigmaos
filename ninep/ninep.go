@@ -215,12 +215,12 @@ func (m Rversion) String() string {
 
 type Tauth struct {
 	Afid   Tfid
-	Unames []string
-	Anames []string
+	Uname string
+	Aname string
 }
 
 func (m Tauth) String() string {
-	return fmt.Sprintf("{afid %v u %v a %v}", m.Afid, m.Unames, m.Anames)
+	return fmt.Sprintf("{afid %v u %v a %v}", m.Afid, m.Uname, m.Aname)
 }
 
 type Rauth struct {

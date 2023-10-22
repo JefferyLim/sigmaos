@@ -54,12 +54,13 @@ message Rversion {
 
 message Tauth {
         uint32 afid = 1;
-        repeated string Unames = 2;
-        repeated string Anames = 3;
+        string Uname = 2;
+        string Aname = 3;
 }
 
 message Rauth {
-       Tqid aqid = 1;
+        //Tqid aqid = 1;
+        uint32 aqid = 1;
 }
 
 message Tattach {
