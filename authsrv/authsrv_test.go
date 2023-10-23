@@ -8,7 +8,7 @@ import (
     "fmt"
 
 	"github.com/stretchr/testify/assert"
-	auth "sigmaos/authsrv"
+    auth "sigmaos/authstructs"
 	"sigmaos/fslib"
 	"sigmaos/rpcclnt"
 	"sigmaos/test"
@@ -21,9 +21,16 @@ import (
 
 )
 
+func TestAuthRun(t * testing.T) {
+    ts := test.MakeTstateAll(t)
+
+    assert.Nil(t, ts.Shutdown())
+}
+
 func TestAuthSrvRPC(t *testing.T) {
 	// start server
 	ts := test.MakeTstateAll(t)
+
 
     sts, err := ts.GetDir(sp.AUTHSRV)
     assert.Nil(t, err)
@@ -43,7 +50,7 @@ func TestAuthSrvRPC(t *testing.T) {
 	assert.Nil(t, ts.Shutdown())
 }
 
-func TestAuthSrvSSH(t *testing.T) {
+func TestAuthSrvSSHAgent(t *testing.T) {
     // start server
     ts := test.MakeTstateAll(t)
 

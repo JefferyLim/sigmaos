@@ -11,4 +11,5 @@ func main() {
 	if err := named.RunKNamed(os.Args); err != nil {
 		db.DFatalf("%v: err %v\n", os.Args[0], err)
 	}
+    db.DPrintf(db.JEFF, "knamed main end")
 }

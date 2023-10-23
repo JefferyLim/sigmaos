@@ -72,7 +72,7 @@ func MakeKernel(p *Param, nameds sp.Taddrs) (*Kernel, error) {
 	}
 	proc.SetSigmaNamed(k.namedAddr)
 	proc.SetSigmaJaegerIP(p.Jaegerip)
-	sc, err := sigmaclnt.MkSigmaClntRootInit("kernel", ip, k.namedAddr)
+	sc, err := sigmaclnt.MkSigmaClntPrivRootInit("kernel", ip, k.namedAddr)
 	if err != nil {
 		db.DPrintf(db.ALWAYS, "Error MkSigmaClntProc (%v): %v", k.namedAddr, err)
 		return nil, err

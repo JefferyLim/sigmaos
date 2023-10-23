@@ -1,6 +1,8 @@
 package sigmaclnt
 
 import (
+    "errors"
+
 	db "sigmaos/debug"
 	"sigmaos/fslib"
 	"sigmaos/leaseclnt"
@@ -65,9 +67,26 @@ func MkSigmaClntRealm(rootfsl *fslib.FsLib, uname sp.Tuname, rid sp.Trealm) (*Si
 	return sc, nil
 }
 
+func MkSigmaClntPrivRootInit(uname sp.Tuname, ip string, namedAddr sp.Taddrs) (*SigmaClnt, error) {
+	fsl, err := fslib.MakeFsLibAddrNet(uname, sp.ROOTREALM, ip, namedAddr, sp.ROOTREALM.String())
+	if err != nil {
+		return nil, err
+	}
+	sc, err := MkSigmaLeaseClnt(fsl)
+	if err != nil {
+		return nil, err
+	}
+	sc.ProcClnt = procclnt.MakeProcClntInit(proc.GetPid(), fsl, string(uname))
+	return sc, nil
+}
+
 // Only to be used by non-procs (tests, and linux processes), and creates a
 // sigmaclnt for the root realm.
 func MkSigmaClntRootInit(uname sp.Tuname, ip string, namedAddr sp.Taddrs) (*SigmaClnt, error) {
+    // note, only privileged procs can use the name "kernel"
+    if(string(uname) == "kernel") {
+        return nil, errors.New("Cannot use uname kernel")
+    }
 	fsl, err := fslib.MakeFsLibAddrNet(uname, sp.ROOTREALM, ip, namedAddr, sp.ROOTREALM.String())
 	if err != nil {
 		return nil, err

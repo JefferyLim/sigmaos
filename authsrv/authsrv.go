@@ -1,11 +1,16 @@
 package authsrv
 
 import (
+	"path"
+
 	db "sigmaos/debug"
 	"sigmaos/fs"
 	"sigmaos/rand"
 	sp "sigmaos/sigmap"
 	"sigmaos/sigmasrv"
+	"sigmaos/memfssrv"
+
+	"sigmaos/procclnt"
 
     "fmt"
     "io"
@@ -15,22 +20,32 @@ import (
 
     "github.com/gliderlabs/ssh"
     gossh "golang.org/x/crypto/ssh"
-
+    AuthStr "sigmaos/authstructs"
 )
 
 type AuthSrv struct {
 	sid     string
     auths   *authMap
+	kernelId string
+
 }
 
-func RunAuthSrv(public bool) error {
+func RunAuthSrv(kernelId string) error {
 	authsrv := &AuthSrv{}
     authsrv.sid = rand.String(8)
     authsrv.auths = mkAuthMap()
+	authsrv.kernelId = kernelId
 
 	db.DPrintf(db.AUTHSRV, "==%v== Creating auth server \n", authsrv.sid)
 
-    ssrv, err := sigmasrv.MakeSigmaSrv(sp.AUTHSRV, authsrv, sp.AUTHSRV)
+    mfs, err := memfssrv.MakeMemFs(path.Join(sp.AUTHSRV, "jeff"), sp.AUTHSRVREL)
+    if err != nil{
+		db.DFatalf("Error MakeMemFs: %v", err)
+	} 
+
+	ssrv, err := sigmasrv.MakeSigmaSrvMemFs(mfs, authsrv)
+    //ssrv, err := sigmasrv.MakeSigmaSrvPublic(sp.AUTHSRV, authsrv, sp.AUTHSRV, false)
+	procclnt.MountPids(mfs.SigmaClnt().FsLib, ssrv.MemFs.SigmaClnt().NamedAddr())
 	if err != nil {
         db.DPrintf(db.AUTHSRV, "%v", err)
 	}
@@ -91,14 +106,14 @@ func RunAuthSrv(public bool) error {
 
 
 // find meaning of life for request
-func (authsrv *AuthSrv) Echo(ctx fs.CtxI, req EchoRequest, rep *EchoResult) error {
+func (authsrv *AuthSrv) Echo(ctx fs.CtxI, req AuthStr.EchoRequest, rep *AuthStr.EchoResult) error {
 	db.DPrintf(db.AUTHSRV, "==%v== Received Echo Request: %v\n", authsrv.sid, req)
 	rep.Text = req.Text
 	return nil
 }
 
 
-func (authsrv *AuthSrv) Auth(ctx fs.CtxI, req AuthRequest, rep *AuthResult) error {
+func (authsrv *AuthSrv) Auth(ctx fs.CtxI, req AuthStr.AuthRequest, rep *AuthStr.AuthResult) error {
 	db.DPrintf(db.AUTHSRV, "==%v== Received Auth Request: %v\n", authsrv.sid, req)
     
     request := authReq{}
@@ -119,7 +134,62 @@ func (authsrv *AuthSrv) Auth(ctx fs.CtxI, req AuthRequest, rep *AuthResult) erro
     return nil
 }
 
-func (authsrv * AuthSrv) Validate(ctx fs.CtxI, req ValidRequest, rep *ValidResult) error {
+func (authsrv * AuthSrv) Validate(ctx fs.CtxI, req AuthStr.ValidRequest, rep *AuthStr.ValidResult) error {
+    db.DPrintf(db.AUTHSRV, "==%v== Received Validate Request: %v\n", authsrv.sid, req)
+    
+    request := authReq{}
+    request.fid = sp.Tfid(req.Fid)
+    request.uname = req.Uname
+    request.aname = req.Aname
+
+    info, err := authsrv.auths.lookup(request)
+    
+    if(err !=  nil){
+        rep.Ok = false
+    }
+
+    if(info.afid == sp.Tfid(req.Afid) && info.authenticated == true){
+        rep.Ok = true
+    }else{
+        rep.Ok = false
+    }
+
+    return nil
+
+}
+
+
+
+// find meaning of life for request
+func (authsrv *AuthSrv) EchoCall(req AuthStr.EchoRequest, rep *AuthStr.EchoResult) error {
+	db.DPrintf(db.AUTHSRV, "==%v== Received Echo Request: %v\n", authsrv.sid, req)
+	rep.Text = req.Text
+	return nil
+}
+
+
+func (authsrv *AuthSrv) AuthCall(req AuthStr.AuthRequest, rep *AuthStr.AuthResult) error {
+	db.DPrintf(db.AUTHSRV, "==%v== Received Auth Request: %v\n", authsrv.sid, req)
+    
+    request := authReq{}
+    request.fid = sp.Tfid(req.Fid)
+    request.uname = req.Uname
+    request.aname = req.Aname
+
+    info, err := authsrv.auths.lookup(request)
+
+    if(err != nil){
+        rep.Afid = uint32(authsrv.auths.allocAuth(request))
+        db.DPrintf(db.AUTHSRV, "==%v== Allocating Auth Request: %d\n", authsrv.sid, rep.Afid)
+    }else{
+        db.DPrintf(db.AUTHSRV, "==%v== Found AFID: %v\n", authsrv.sid, info) 
+        rep.Afid = uint32(info.afid)
+    }
+
+    return nil
+}
+
+func (authsrv * AuthSrv) ValidateCall(req AuthStr.ValidRequest, rep *AuthStr.ValidResult) error {
     db.DPrintf(db.AUTHSRV, "==%v== Received Validate Request: %v\n", authsrv.sid, req)
     
     request := authReq{}

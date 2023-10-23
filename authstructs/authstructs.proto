@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+option go_package = "sigmaos/authstructs";
+
+service AuthService {
+  rpc Echo(EchoRequest) returns (EchoResult);
+  rpc Auth(AuthRequest) returns (AuthResult);
+  rpc Validate(ValidRequest) returns (ValidResult);
+}
+
+message EchoRequest {
+  string text = 1;
+}
+
+message EchoResult {
+  string text = 1;
+}
+
+message AuthRequest {
+  uint32 fid = 1;
+  string uname = 2;
+  string aname = 3;
+}
+
+message AuthResult {
+  uint32 afid = 1;
+}
+
+message ValidRequest {
+  uint32 afid = 1;
+  uint32 fid = 2;
+  string uname = 3;
+  string aname = 4;
+}
+
+message ValidResult {
+  bool ok = 1;
+}

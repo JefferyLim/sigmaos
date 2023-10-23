@@ -25,7 +25,7 @@ while [[ "$#" -gt 1 ]]; do
     shift
     case "$1" in
         "all")
-            BOOT="knamed;schedd;ux;s3;db;mongo;named;authsrv"
+            BOOT="knamed;schedd;authsrv;ux;s3;db;mongo;named"
             ;;
         "node")
             BOOT="schedd;ux;s3;db;mongo"

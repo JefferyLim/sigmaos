@@ -16,6 +16,13 @@ import (
 	"sigmaos/stats"
 	"sigmaos/version"
 	"sigmaos/watch"
+/*
+    gopath "path"
+    "sigmaos/rpcclnt"
+    authstr "sigmaos/authstructs"
+    "sigmaos/sigmaclnt"
+    "sigmaos/fslib"
+    */
 )
 
 //
@@ -33,6 +40,9 @@ type ProtSrv struct {
 	et    *ephemeralmap.EphemeralMap // shared across sessions
 	ft    *fidTable
 	sid   sessp.Tsession
+   // sc    *sigmaclnt.SigmaClnt
+    //rpcc  *rpcclnt.RPCClnt
+    //temp  int32
 }
 
 func MakeProtServer(s sps.SessServer, sid sessp.Tsession) sps.Protsrv {
@@ -47,7 +57,15 @@ func MakeProtServer(s sps.SessServer, sid sessp.Tsession) sps.Protsrv {
 	ps.vt = srv.GetVersionTable()
 	ps.stats = srv.GetStats()
 	ps.sid = sid
-	db.DPrintf(db.PROTSRV, "MakeProtSrv -> %v", ps)
+    /*
+    sc, _ := sigmaclnt.MkSigmaClntFsLib(sp.Tuname("procsrv"))
+	
+    ps.sc = sc
+    ps.rpcc = &rpcclnt.RPCClnt{}
+
+    ps.temp = 0
+*/
+    db.DPrintf(db.PROTSRV, "MakeProtSrv -> %v", ps)
 	return ps
 }
 
@@ -67,7 +85,26 @@ func (ps *ProtSrv) Auth(args *sp.Tauth, rets *sp.Rauth) *sp.Rerror {
 
 func (ps *ProtSrv) Attach(args *sp.Tattach, rets *sp.Rattach, attach sps.AttachClntF) *sp.Rerror {
 	db.DPrintf(db.PROTSRV, "Attach %v sid %v", args, ps.sid)
-	p := path.Split(args.Aname)
+
+    /*
+    if(args.Afid != 4294967295){
+        fn := gopath.Join(sp.AUTHSRV, "jeff")
+        // create a RPC client and query server
+        if(ps.temp == 0){
+            ps.temp = 15
+            db.DPrintf(db.JEFF, "EMPTY{")
+	        rpcc, _ := rpcclnt.MkRPCClnt([]*fslib.FsLib{ps.sc.FsLib}, fn)
+            ps.rpcc = rpcc
+        }
+        
+        arg := authstr.EchoRequest{Text: "Hello World!"}
+	    res := authstr.EchoResult{}
+        err := ps.rpcc.RPC("AuthSrv.Echo", &arg, &res)
+        db.DPrintf(db.PROTSRV, "Jeff: %v %v", err, res)
+    }
+    */
+    
+    p := path.Split(args.Aname)
 	root, ctx := ps.ssrv.GetRootCtx(args.Tuname(), args.Aname, ps.sid, args.TclntId())
 	tree := root.(fs.FsObj)
 	qid := ps.mkQid(tree.Perm(), tree.Path())

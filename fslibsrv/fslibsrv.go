@@ -24,7 +24,8 @@ import (
 //
 
 func BootSrv(root fs.Dir, addr string, attachf sps.AttachClntF, detachf sps.DetachClntF, et *ephemeralmap.EphemeralMap) *sesssrv.SessSrv {
-	return sesssrv.MakeSessSrv(root, addr, protsrv.MakeProtServer, attachf, detachf, et, nil)
+	db.DPrintf(db.JEFF, "bootsrv")
+    return sesssrv.MakeSessSrv(root, addr, protsrv.MakeProtServer, attachf, detachf, et, nil)
 }
 
 func Post(sesssrv *sesssrv.SessSrv, sc *sigmaclnt.SigmaClnt, path string) error {
@@ -53,5 +54,7 @@ func MakeReplServerFsl(root fs.Dir, addr string, path string, sc *sigmaclnt.Sigm
 }
 
 func MakeSrv(root fs.Dir, path, port string, sc *sigmaclnt.SigmaClnt, fencefs fs.Dir) (*sesssrv.SessSrv, error) {
-	return MakeReplServerFsl(root, port, path, sc, fencefs)
+
+	db.DPrintf(db.JEFF, "makesrv")
+    return MakeReplServerFsl(root, port, path, sc, fencefs)
 }
