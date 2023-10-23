@@ -49,14 +49,18 @@ func (am * authMap) allocAuth(req authReq) sp.Tfid {
     return afid
 }
 
-func (am * authMap) authenticate(req authReq) {
+func (am * authMap) authenticate(req authReq) (sp.Tfid, error) {
     am.Lock()
     defer am.Unlock()
 
     if ai, ok := am.authmap[req]; ok {
         ai.authenticated = true
         am.authmap[req] = ai    
+        return ai.afid, nil
     }
+
+    return sp.Tfid(0), errors.New("shouldn't be here")
+    
 }
 
 func (am * authMap) lookup(req authReq) (authInfo, error) {
@@ -71,4 +75,14 @@ func (am * authMap) lookup(req authReq) (authInfo, error) {
     }
 
     return  found, errors.New("authMap lookup failed")
+}
+
+func (am * authMap) delete(req authReq) {
+    am.Lock()
+    defer am.Unlock()
+    if ai, ok := am.authmap[req]; ok {
+        if(ai.authenticated == false){
+            delete(am.authmap, req)
+        }
+    }
 }

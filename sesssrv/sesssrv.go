@@ -21,6 +21,9 @@ import (
 	"sigmaos/stats"
 	"sigmaos/version"
 	"sigmaos/watch"
+    "sigmaos/authsrv"
+    "net"
+    "strconv"
 )
 
 //
@@ -48,6 +51,7 @@ type SessSrv struct {
 	fencefs  fs.Dir
 	srv      *netsrv.NetServer
 	qlen     stats.Tcounter
+    as       *authsrv.AuthSrv
 }
 
 func MakeSessSrv(root fs.Dir, addr string, mkps sps.MkProtServer, attachf sps.AttachClntF, detachf sps.DetachClntF, et *ephemeralmap.EphemeralMap, fencefs fs.Dir) *SessSrv {
@@ -70,8 +74,17 @@ func MakeSessSrv(root fs.Dir, addr string, mkps sps.MkProtServer, attachf sps.At
 
 	ssrv.srv = netsrv.MakeNetServer(ssrv, addr, spcodec.WriteFcallAndData, spcodec.ReadUnmarshalFcallAndData)
 	ssrv.sm = sessstatesrv.MakeSessionMgr(ssrv.st, ssrv.SrvFcall)
+    
+
+    _, port, _ := net.SplitHostPort(ssrv.srv.MyAddr())
+    port_num, _ := strconv.Atoi(port)
+    ssrv.as = authsrv.RunAuthSrv(uint32(port_num)+1)
 	db.DPrintf(db.SESSSRV, "Listen on address: %v", ssrv.srv.MyAddr())
 	return ssrv
+}
+
+func (ssrv *SessSrv) GetAS() *authsrv.AuthSrv {
+    return ssrv.as
 }
 
 func (ssrv *SessSrv) GetPathLockTable() *lockmap.PathLockTable {

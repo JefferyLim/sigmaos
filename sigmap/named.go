@@ -24,8 +24,6 @@
         DBD        = DB + "~any/"
         MONGOREL   = "mongo"
         MONGO      = NAMED + MONGOREL + "/"
-        AUTHSRVREL = "authsrv"
-        AUTHSRV    = NAMED + AUTHSRVREL + "/"
 
         UXBIN = UX + "~local/bin/"
 

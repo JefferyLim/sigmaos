@@ -4,8 +4,8 @@ import (
 	db "sigmaos/debug"
 	"sigmaos/ephemeralmap"
 	"sigmaos/fid"
-	"sigmaos/fs"
-	"sigmaos/lockmap"
+	"sigmaos/fs" 
+    "sigmaos/lockmap"
 	"sigmaos/namei"
 	"sigmaos/path"
 	"sigmaos/serr"
@@ -16,13 +16,7 @@ import (
 	"sigmaos/stats"
 	"sigmaos/version"
 	"sigmaos/watch"
-/*
-    gopath "path"
-    "sigmaos/rpcclnt"
-    authstr "sigmaos/authstructs"
-    "sigmaos/sigmaclnt"
-    "sigmaos/fslib"
-    */
+    "sigmaos/authsrv"
 )
 
 //
@@ -40,9 +34,6 @@ type ProtSrv struct {
 	et    *ephemeralmap.EphemeralMap // shared across sessions
 	ft    *fidTable
 	sid   sessp.Tsession
-   // sc    *sigmaclnt.SigmaClnt
-    //rpcc  *rpcclnt.RPCClnt
-    //temp  int32
 }
 
 func MakeProtServer(s sps.SessServer, sid sessp.Tsession) sps.Protsrv {
@@ -57,14 +48,7 @@ func MakeProtServer(s sps.SessServer, sid sessp.Tsession) sps.Protsrv {
 	ps.vt = srv.GetVersionTable()
 	ps.stats = srv.GetStats()
 	ps.sid = sid
-    /*
-    sc, _ := sigmaclnt.MkSigmaClntFsLib(sp.Tuname("procsrv"))
-	
-    ps.sc = sc
-    ps.rpcc = &rpcclnt.RPCClnt{}
-
-    ps.temp = 0
-*/
+    
     db.DPrintf(db.PROTSRV, "MakeProtSrv -> %v", ps)
 	return ps
 }
@@ -80,29 +64,37 @@ func (ps *ProtSrv) Version(args *sp.Tversion, rets *sp.Rversion) *sp.Rerror {
 }
 
 func (ps *ProtSrv) Auth(args *sp.Tauth, rets *sp.Rauth) *sp.Rerror {
-	return sp.MkRerror(serr.MkErr(serr.TErrNotSupported, "Auth"))
+
+    as := ps.ssrv.GetAS()
+    rets.Aqid = as.GetPort()
+
+    send := authsrv.EchoRequest{Text: "Hello World"}
+    rec := authsrv.EchoResult{}
+
+    as.EchoCall(send, &rec)
+
+    authreq := authsrv.AuthRequest{Fid: args.Afid, Uname: args.Uname, Aname: args.Aname}
+    authrec := authsrv.AuthResult{}
+
+    as.AuthCall(authreq, &authrec)
+
+    db.DPrintf(db.JEFF, "ssh port number: %d", rets.Aqid)
+    return nil
+    //return sp.MkRerror(serr.MkErr(serr.TErrNotSupported, "Auth"))
 }
 
 func (ps *ProtSrv) Attach(args *sp.Tattach, rets *sp.Rattach, attach sps.AttachClntF) *sp.Rerror {
 	db.DPrintf(db.PROTSRV, "Attach %v sid %v", args, ps.sid)
 
-    /*
-    if(args.Afid != 4294967295){
-        fn := gopath.Join(sp.AUTHSRV, "jeff")
-        // create a RPC client and query server
-        if(ps.temp == 0){
-            ps.temp = 15
-            db.DPrintf(db.JEFF, "EMPTY{")
-	        rpcc, _ := rpcclnt.MkRPCClnt([]*fslib.FsLib{ps.sc.FsLib}, fn)
-            ps.rpcc = rpcc
-        }
-        
-        arg := authstr.EchoRequest{Text: "Hello World!"}
-	    res := authstr.EchoResult{}
-        err := ps.rpcc.RPC("AuthSrv.Echo", &arg, &res)
-        db.DPrintf(db.PROTSRV, "Jeff: %v %v", err, res)
+    if(sp.Tfid(args.Afid) != sp.NoFid){
+        authreq := authsrv.ValidRequest{Fid: args.Fid, Afid: args.Afid, Uname: args.Uname, Aname: args.Aname}
+        authrec := authsrv.ValidResult{}
+
+        as := ps.ssrv.GetAS()
+        as.ValidateCall(authreq, &authrec)
+
+        db.DPrintf(db.PROTSRV, "Attach authenticated :%t", authrec.Ok)
     }
-    */
     
     p := path.Split(args.Aname)
 	root, ctx := ps.ssrv.GetRootCtx(args.Tuname(), args.Aname, ps.sid, args.TclntId())
