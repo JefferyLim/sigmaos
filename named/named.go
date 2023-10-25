@@ -148,7 +148,9 @@ func (nd *Named) mkSrv() (sp.Tmount, error) {
 		pi = pi0
 		ip = ":" + pi.Pb.RealmPort.String()
 	}
-	srv := fslibsrv.BootSrv(root, ip, nd.attach, nd.detach, nil)
+
+    uname := sp.Tuname(proc.GetPid().String())
+	srv := fslibsrv.BootSrv(root, ip, nd.attach, nd.detach, nil, uname)
 	if srv == nil {
 		return sp.NullMount(), fmt.Errorf("BootSrv err %v\n", err)
 	}

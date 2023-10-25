@@ -60,7 +60,7 @@ func TestAuthSrvSSHAgent(t *testing.T) {
 
     agentClient := agent.NewClient(conn)
     config := &ssh.ClientConfig{
-        User: "1-jeff-stuff",
+        User: "1--jeff--stuff",
         Auth: []ssh.AuthMethod{
             // Use a callback rather than PublicKeys so we only consult the
             // agent once theremote server wants it.
@@ -113,12 +113,11 @@ func TestAuthSrvAll(t *testing.T){
     
     db.DPrintf(db.TEST, "Auth RPC returns afid: %d\n", res.Afid)
 
-
     socket := os.Getenv("SSH_AUTH_SOCK")
     conn, err := net.Dial("unix", socket)
     assert.Nil(t, err, "Error dialing to unix socket %s", socket)
 
-    username := fmt.Sprintf("%d-%s-%s", 0, "jeff", "world0")
+    username := fmt.Sprintf("%d--%s--%s", 0, "jeff", "world0")
 
     agentClient := agent.NewClient(conn)
     config := &ssh.ClientConfig{

@@ -56,26 +56,28 @@ func RunAuthSrv(kernelId string) error {
         io.WriteString(s, fmt.Sprintf("public key used by %s:\n", s.User()))
         s.Write(authorizedKey)
 
-        // Expect user to be fid-uname-aname
-        split := strings.Split(s.User(), "-")
 
-        info := authReq{}
-        i, err := strconv.ParseInt(split[0], 10, 32)
-        if err != nil {
-            panic(err)
+        // Expect user to be fid-uname-aname
+        split := strings.Split(s.User(), "--")
+        db.DPrintf(db.JEFF, "split: %v, %v", s.User(), split)
+
+   		i, err1 := strconv.ParseInt(split[0], 10, 32)
+        if( err1 != nil){
+            db.DPrintf(db.AUTHSRV, "strconv error %v", err1)
         }
 
+        info := authReq{}
         info.fid = sp.Tfid(uint32(i))
         info.uname = split[1]
         info.aname = split[2]
 
         check, err := authsrv.auths.lookup(info)
-        db.DPrintf(db.AUTHSRV, "authmap: %v:%v\n", check, err)
 
         if (err != nil) {
             db.DPrintf(db.AUTHSRV, "can't find associated fid")
         }else{
-            authsrv.auths.authenticate(info)
+        	db.DPrintf(db.AUTHSRV, "ssh handle auths.lookup: %v:%v\n", check, err)
+        	authsrv.auths.authenticate(info)
         }
 
     })
@@ -135,61 +137,6 @@ func (authsrv *AuthSrv) Auth(ctx fs.CtxI, req AuthStr.AuthRequest, rep *AuthStr.
 }
 
 func (authsrv * AuthSrv) Validate(ctx fs.CtxI, req AuthStr.ValidRequest, rep *AuthStr.ValidResult) error {
-    db.DPrintf(db.AUTHSRV, "==%v== Received Validate Request: %v\n", authsrv.sid, req)
-    
-    request := authReq{}
-    request.fid = sp.Tfid(req.Fid)
-    request.uname = req.Uname
-    request.aname = req.Aname
-
-    info, err := authsrv.auths.lookup(request)
-    
-    if(err !=  nil){
-        rep.Ok = false
-    }
-
-    if(info.afid == sp.Tfid(req.Afid) && info.authenticated == true){
-        rep.Ok = true
-    }else{
-        rep.Ok = false
-    }
-
-    return nil
-
-}
-
-
-
-// find meaning of life for request
-func (authsrv *AuthSrv) EchoCall(req AuthStr.EchoRequest, rep *AuthStr.EchoResult) error {
-	db.DPrintf(db.AUTHSRV, "==%v== Received Echo Request: %v\n", authsrv.sid, req)
-	rep.Text = req.Text
-	return nil
-}
-
-
-func (authsrv *AuthSrv) AuthCall(req AuthStr.AuthRequest, rep *AuthStr.AuthResult) error {
-	db.DPrintf(db.AUTHSRV, "==%v== Received Auth Request: %v\n", authsrv.sid, req)
-    
-    request := authReq{}
-    request.fid = sp.Tfid(req.Fid)
-    request.uname = req.Uname
-    request.aname = req.Aname
-
-    info, err := authsrv.auths.lookup(request)
-
-    if(err != nil){
-        rep.Afid = uint32(authsrv.auths.allocAuth(request))
-        db.DPrintf(db.AUTHSRV, "==%v== Allocating Auth Request: %d\n", authsrv.sid, rep.Afid)
-    }else{
-        db.DPrintf(db.AUTHSRV, "==%v== Found AFID: %v\n", authsrv.sid, info) 
-        rep.Afid = uint32(info.afid)
-    }
-
-    return nil
-}
-
-func (authsrv * AuthSrv) ValidateCall(req AuthStr.ValidRequest, rep *AuthStr.ValidResult) error {
     db.DPrintf(db.AUTHSRV, "==%v== Received Validate Request: %v\n", authsrv.sid, req)
     
     request := authReq{}
