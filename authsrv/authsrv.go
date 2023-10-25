@@ -12,9 +12,10 @@ import (
 
 	"sigmaos/procclnt"
 
+    "os"
+	"path/filepath"
     "fmt"
     "io"
-    "io/ioutil"
     "strings"
     "strconv"
 
@@ -44,18 +45,36 @@ func RunAuthSrv(kernelId string) error {
 	} 
 
 	ssrv, err := sigmasrv.MakeSigmaSrvMemFs(mfs, authsrv)
-    //ssrv, err := sigmasrv.MakeSigmaSrvPublic(sp.AUTHSRV, authsrv, sp.AUTHSRV, false)
 	procclnt.MountPids(mfs.SigmaClnt().FsLib, ssrv.MemFs.SigmaClnt().NamedAddr())
 	if err != nil {
         db.DPrintf(db.AUTHSRV, "%v", err)
 	}
 	db.DPrintf(db.AUTHSRV, "==%v== Starting to run auth service\n", authsrv.sid)
 
+	authorizedKeysMap := make(map[string]string)
+
+		err = filepath.Walk("keys/", func(path string, info os.FileInfo, err error) error {
+			if !info.IsDir() {
+				authorizedKeysBytes, err := os.ReadFile(path)
+				if err != nil {
+					db.DPrintf(db.AUTHSRV, "Error reading %v", path)
+				}else{
+					pubKey, _, _, _, err := ssh.ParseAuthorizedKey(authorizedKeysBytes)
+					if err != nil {
+						db.DPrintf(db.AUTHSRV, "Error parsing key %v", err)
+					}
+					user := strings.Split(path, "/") 
+					authorizedKeysMap[string(pubKey.Marshal())] = user[1]
+				}	
+			}
+			return nil
+		})
+
+
     ssh.Handle(func(s ssh.Session) {
         authorizedKey := gossh.MarshalAuthorizedKey(s.PublicKey())
         io.WriteString(s, fmt.Sprintf("public key used by %s:\n", s.User()))
         s.Write(authorizedKey)
-
 
         // Expect user to be fid-uname-aname
         split := strings.Split(s.User(), "--")
@@ -83,20 +102,16 @@ func RunAuthSrv(kernelId string) error {
     })
 
     publicKeyOption := ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
-        data, err := ioutil.ReadFile("keys/id_agent_test.pub")
-        if err != nil {
-            db.DPrintf(db.AUTHSRV, "%v", err)
-        }
+        // Expect user to be fid-uname-aname
+        split := strings.Split(ctx.User(), "--")
+        db.DPrintf(db.JEFF, "split: %v, %v", ctx.User(), split)
 
-        allowed, _, _, _, err := ssh.ParseAuthorizedKey(data)
-        if err != nil {
-            db.DPrintf(db.AUTHSRV, "%v", err)
-        }
-        
-        equal := ssh.KeysEqual(key, allowed)
-        db.DPrintf(db.AUTHSRV, "user login attempt: %v:%t", ctx.User(), equal)
-        
-        return equal
+        if authorizedKeysMap[string(key.Marshal())] == split[1] {
+			db.DPrintf(db.AUTHSRV, "user login attempt: %v:%v", ctx.User(), key)
+        	return true
+		}
+
+		return false
     
     })
 
