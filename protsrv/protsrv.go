@@ -15,7 +15,8 @@ import (
 	sps "sigmaos/sigmaprotsrv"
 	"sigmaos/stats"
 	"sigmaos/version"
-	"sigmaos/watch"
+    "sigmaos/watch"
+    "sigmaos/sigmaclnt"
 )
 
 //
@@ -33,6 +34,7 @@ type ProtSrv struct {
 	et    *ephemeralmap.EphemeralMap // shared across sessions
 	ft    *fidTable
 	sid   sessp.Tsession
+    sc    *sigmaclnt.SigmaClnt
 }
 
 func MakeProtServer(s sps.SessServer, sid sessp.Tsession) sps.Protsrv {
@@ -47,6 +49,14 @@ func MakeProtServer(s sps.SessServer, sid sessp.Tsession) sps.Protsrv {
 	ps.vt = srv.GetVersionTable()
 	ps.stats = srv.GetStats()
 	ps.sid = sid
+
+    sc, err := sigmaclnt.MkSigmaClntFsLib("jeff")
+    if err != nil {
+        db.DPrintf(db.PROTSRV, "JEFF: Error in MkSigmaClntFsLib: %v", err)
+    }
+
+    ps.sc = sc
+
 	db.DPrintf(db.PROTSRV, "MakeProtSrv -> %v", ps)
 	return ps
 }
@@ -62,11 +72,29 @@ func (ps *ProtSrv) Version(args *sp.Tversion, rets *sp.Rversion) *sp.Rerror {
 }
 
 func (ps *ProtSrv) Auth(args *sp.Tauth, rets *sp.Rauth) *sp.Rerror {
+    sts, err := ps.sc.FsLib.GetDir(sp.NAMED)
+    if err != nil {
+        db.DPrintf(db.PROTSRV, "JEFF: Error in GetDir: %v", err)
+    }else{
+        db.DPrintf(db.PROTSRV, "JEFF: GetDir: %v", sts)
+    }
+
 	return sp.MkRerror(serr.MkErr(serr.TErrNotSupported, "Auth"))
 }
 
 func (ps *ProtSrv) Attach(args *sp.Tattach, rets *sp.Rattach, attach sps.AttachClntF) *sp.Rerror {
-	db.DPrintf(db.PROTSRV, "Attach %v sid %v", args, ps.sid)
+    // prevent an infinite loop, since it's going to try and connect every time
+    // normally, i would only call this once
+    if(args.Tuname() != "jeff") {
+	    sts, err := ps.sc.FsLib.GetDir(sp.NAMED)
+        if err != nil {
+            db.DPrintf(db.PROTSRV, "JEFF: Error in GetDir: %v", err)
+        }else{
+            db.DPrintf(db.PROTSRV, "JEFF: GetDir: %v", sts)
+        }
+    }
+
+    db.DPrintf(db.PROTSRV, "Attach %v sid %v", args, ps.sid)
 	p := path.Split(args.Aname)
 	root, ctx := ps.ssrv.GetRootCtx(args.Tuname(), args.Aname, ps.sid, args.TclntId())
 	tree := root.(fs.FsObj)
