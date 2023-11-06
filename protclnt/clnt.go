@@ -2,7 +2,6 @@ package protclnt
 
 import (
 	"sync/atomic"
-    db "sigmaos/debug"
 	"sigmaos/path"
 	"sigmaos/rand"
 	"sigmaos/serr"
