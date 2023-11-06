@@ -14,6 +14,8 @@ import (
 	"sigmaos/sessp"
 )
 
+
+type Tuuid string
 type Tfid uint32
 type Tpath uint64
 type Tiounit uint32
@@ -311,8 +313,8 @@ func (a *Tauth) Tuname() Tuname {
     return Tuname(a.Uname)
 }
 
-func MkTattach(fid, afid Tfid, uname Tuname, cid TclntId, path path.Path) *Tattach {
-	return &Tattach{Fid: uint32(fid), Afid: uint32(afid), Uname: string(uname), Aname: path.String(), ClntId: uint64(cid)}
+func MkTattach(fid, afid Tfid, uname Tuname, cid TclntId, path path.Path, uuid Tuuid) *Tattach {
+    return &Tattach{Fid: uint32(fid), Afid: uint32(afid), Uname: string(uname), Aname: path.String(), ClntId: uint64(cid), Uuid: string(uuid)}
 }
 
 func (a *Tattach) Tfid() Tfid {
@@ -325,6 +327,10 @@ func (a *Tattach) Tuname() Tuname {
 
 func (a *Tattach) TclntId() TclntId {
 	return TclntId(a.ClntId)
+}
+
+func (a *Tattach) Tuuid() Tuuid {
+    return Tuuid(a.Uuid)
 }
 
 func MkTopen(fid Tfid, mode Tmode) *Topen {

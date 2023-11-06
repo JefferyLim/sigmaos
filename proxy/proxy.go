@@ -103,8 +103,8 @@ func (npc *NpConn) Attach(args *sp.Tattach, rets *sp.Rattach, attach sps.AttachC
 	}
 	npc.uname = sp.Tuname(u.Uid)
 
-	mnt := npc.pc.GetMntNamed("proxy")
-	fid, err := npc.fidc.Attach(npc.uname, npc.cid, mnt.Addr, "", "")
+	mnt := npc.pc.GetMntNamed("proxy", "")
+    fid, err := npc.fidc.Attach(npc.uname, npc.cid, mnt.Addr, "", "", "")
 	if err != nil {
 		db.DPrintf(db.PROXY, "Attach args %v err %v\n", args, err)
 		return sp.MkRerror(err)
@@ -130,7 +130,7 @@ func (npc *NpConn) Walk(args *sp.Twalk, rets *sp.Rwalk) *sp.Rerror {
 	if !ok {
 		return sp.MkRerrorCode(serr.TErrNotfound)
 	}
-	fid1, err := npc.pc.Walk(fid, args.Wnames, "proxy")
+	fid1, err := npc.pc.Walk(fid, args.Wnames, "proxy", "")
 	if err != nil {
 		db.DPrintf(db.PROXY, "Walk args %v err: %v\n", args, err)
 		return sp.MkRerror(err)

@@ -84,7 +84,7 @@ func np2SpMsg(fcm *sessp.FcallMsg) {
 	switch fcm.Type() {
 	case sessp.TTattach9P:
 		m := fcm.Msg.(*np.Tattach9P)
-		r := sp.MkTattach(sp.Tfid(m.Fid), sp.Tfid(m.Afid), sp.Tuname(m.Uname), 0, path.Split(m.Aname))
+		r := sp.MkTattach(sp.Tfid(m.Fid), sp.Tfid(m.Afid), sp.Tuname(m.Uname), 0, path.Split(m.Aname), sp.Tuuid(""))
 		fcm.Msg = r
 	case sessp.TTread:
 		m := fcm.Msg.(*np.Tread)

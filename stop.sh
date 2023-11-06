@@ -63,3 +63,5 @@ sudo rm -rf /tmp/sigmaos-bin
 
 # delete all keys from etcd
 docker exec etcd-server etcdctl del --prefix ''
+
+rm -rf logs/*

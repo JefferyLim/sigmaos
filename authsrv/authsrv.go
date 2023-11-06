@@ -17,11 +17,12 @@ import (
     "fmt"
     "io"
     "strings"
-    "strconv"
 
     "github.com/gliderlabs/ssh"
-    gossh "golang.org/x/crypto/ssh"
+    //gossh "golang.org/x/crypto/ssh"
     AuthStr "sigmaos/authstructs"
+    //"github.com/google/uuid"
+
 )
 
 type AuthSrv struct {
@@ -30,6 +31,7 @@ type AuthSrv struct {
 	kernelId string
 
 }
+
 
 func RunAuthSrv(kernelId string) error {
 	authsrv := &AuthSrv{}
@@ -51,8 +53,6 @@ func RunAuthSrv(kernelId string) error {
 	}
 	db.DPrintf(db.AUTHSRV, "==%v== Starting to run auth service\n", authsrv.sid)
 
-	authorizedKeysMap := make(map[string]string)
-
 		err = filepath.Walk("keys/", func(path string, info os.FileInfo, err error) error {
 			if !info.IsDir() {
 				authorizedKeysBytes, err := os.ReadFile(path)
@@ -63,56 +63,47 @@ func RunAuthSrv(kernelId string) error {
 					if err != nil {
 						db.DPrintf(db.AUTHSRV, "Error parsing key %v", err)
 					}
-					user := strings.Split(path, "/") 
-					authorizedKeysMap[string(pubKey.Marshal())] = user[1]
+					user := strings.Split(path, "/")
+                    username := user[1]
+
+                    authsrv.auths.createUser(username, string(pubKey.Marshal()))
 				}	
 			}
 			return nil
 		})
 
-
+    // SSH handler function for when a user is authenticated
     ssh.Handle(func(s ssh.Session) {
-        authorizedKey := gossh.MarshalAuthorizedKey(s.PublicKey())
-        io.WriteString(s, fmt.Sprintf("public key used by %s:\n", s.User()))
-        s.Write(authorizedKey)
-
-        // Expect user to be fid-uname-aname
-        split := strings.Split(s.User(), "--")
-        db.DPrintf(db.JEFF, "split: %v, %v", s.User(), split)
-
-   		i, err1 := strconv.ParseInt(split[0], 10, 32)
-        if( err1 != nil){
-            db.DPrintf(db.AUTHSRV, "strconv error %v", err1)
-        }
-
         info := authReq{}
-        info.fid = sp.Tfid(uint32(i))
-        info.uname = split[1]
-        info.aname = split[2]
-
-        check, err := authsrv.auths.lookup(info)
+        info.fid = sp.Tfid(uint32(0))
+        info.uname = s.User()
+        info.aname = s.User()
+            
+        uuid, err := authsrv.auths.createUUID(s.User())
+        if err == nil {
+            db.DPrintf(db.AUTHSRV, "UUID created: %v\n", uuid)
+        }
+            
+        //check, err := authsrv.auths.lookup(info)
 
         if (err != nil) {
             db.DPrintf(db.AUTHSRV, "can't find associated fid")
         }else{
-        	db.DPrintf(db.AUTHSRV, "ssh handle auths.lookup: %v:%v\n", check, err)
-        	authsrv.auths.authenticate(info)
+        	db.DPrintf(db.AUTHSRV, "ssh handle auths.lookup: %v:%v\n", "hi", err)
+        	//authsrv.auths.authenticate(info)
         }
+
+        io.WriteString(s, fmt.Sprintf("%s", uuid))
 
     })
 
     publicKeyOption := ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
-        // Expect user to be fid-uname-aname
-        split := strings.Split(ctx.User(), "--")
-        db.DPrintf(db.JEFF, "split: %v, %v", ctx.User(), split)
-
-        if authorizedKeysMap[string(key.Marshal())] == split[1] {
-			db.DPrintf(db.AUTHSRV, "user login attempt: %v:%v", ctx.User(), key)
+        if authsrv.auths.authmap[ctx.User()].pubkey == string(key.Marshal()) {    
+			db.DPrintf(db.AUTHSRV, "user login success: %v:%v", ctx.User(), key)
         	return true
 		}
-
-		return false
-    
+		
+        return false
     })
 
     go ssh.ListenAndServe(":2222", nil, publicKeyOption)
@@ -137,7 +128,7 @@ func (authsrv *AuthSrv) Auth(ctx fs.CtxI, req AuthStr.AuthRequest, rep *AuthStr.
     request.fid = sp.Tfid(req.Fid)
     request.uname = req.Uname
     request.aname = req.Aname
-
+/*
     info, err := authsrv.auths.lookup(request)
 
     if(err != nil){
@@ -147,7 +138,7 @@ func (authsrv *AuthSrv) Auth(ctx fs.CtxI, req AuthStr.AuthRequest, rep *AuthStr.
         db.DPrintf(db.AUTHSRV, "==%v== Found AFID: %v\n", authsrv.sid, info) 
         rep.Afid = uint32(info.afid)
     }
-
+*/
     return nil
 }
 
@@ -158,7 +149,7 @@ func (authsrv * AuthSrv) Validate(ctx fs.CtxI, req AuthStr.ValidRequest, rep *Au
     request.fid = sp.Tfid(req.Fid)
     request.uname = req.Uname
     request.aname = req.Aname
-
+/*
     info, err := authsrv.auths.lookup(request)
     
     if(err !=  nil){
@@ -170,7 +161,7 @@ func (authsrv * AuthSrv) Validate(ctx fs.CtxI, req AuthStr.ValidRequest, rep *Au
     }else{
         rep.Ok = false
     }
-
+*/
     return nil
 
 }

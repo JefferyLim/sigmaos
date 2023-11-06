@@ -75,8 +75,8 @@ func (pathc *PathClnt) Mounts() []string {
 	return pathc.mnt.mountedPaths()
 }
 
-func (pathc *PathClnt) MountTree(uname sp.Tuname, addrs sp.Taddrs, tree, mnt string) error {
-	if fd, err := pathc.Attach(uname, pathc.cid, addrs, "", tree); err == nil {
+func (pathc *PathClnt) MountTree(uname sp.Tuname, addrs sp.Taddrs, tree, mnt string, uuid sp.Tuuid) error {
+	if fd, err := pathc.Attach(uname, pathc.cid, addrs, "", tree, uuid); err == nil {
 		return pathc.Mount(fd, mnt)
 	} else {
 		return err
@@ -85,13 +85,13 @@ func (pathc *PathClnt) MountTree(uname sp.Tuname, addrs sp.Taddrs, tree, mnt str
 
 // Return path to the symlink for the last server on this path and the
 // the rest of the path on the server.
-func (pathc *PathClnt) PathLastSymlink(pn string, uname sp.Tuname) (path.Path, path.Path, error) {
+func (pathc *PathClnt) PathLastSymlink(pn string, uname sp.Tuname, uuid sp.Tuuid) (path.Path, path.Path, error) {
 	// Automount the longest prefix of pn; if pn exist, then the
 	// server holding the directory/file correspending to pn.
-	if _, err := pathc.Stat(pn+"/", uname); err != nil {
+	if _, err := pathc.Stat(pn+"/", uname, uuid); err != nil {
 		db.DPrintf(db.PATHCLNT_ERR, "Stat %v err %v\n", pn, err)
 	}
-	return pathc.LastMount(pn, uname)
+	return pathc.LastMount(pn, uname, uuid)
 }
 
 // Close all sessions
@@ -175,12 +175,12 @@ func (pathc *PathClnt) Mount(fid sp.Tfid, path string) error {
 	return nil
 }
 
-func (pathc *PathClnt) Create(p string, uname sp.Tuname, perm sp.Tperm, mode sp.Tmode, lid sp.TleaseId, f sp.Tfence) (sp.Tfid, error) {
+func (pathc *PathClnt) Create(p string, uname sp.Tuname, perm sp.Tperm, mode sp.Tmode, lid sp.TleaseId, f sp.Tfence, uuid sp.Tuuid) (sp.Tfid, error) {
 	db.DPrintf(db.PATHCLNT, "Create %v perm %v lid %v\n", p, perm, lid)
 	path := path.Split(p)
 	dir := path.Dir()
 	base := path.Base()
-	fid, err := pathc.walk(dir, uname, true, nil)
+	fid, err := pathc.walk(dir, uname, true, nil, uuid)
 	if err != nil {
 		db.DPrintf(db.PATHCLNT_ERR, "Walk failed: %v", p)
 		return sp.NoFid, err
@@ -195,26 +195,26 @@ func (pathc *PathClnt) Create(p string, uname sp.Tuname, perm sp.Tperm, mode sp.
 
 // Rename using renameat() for across directories or using wstat()
 // for within a directory.
-func (pathc *PathClnt) Rename(old, new string, uname sp.Tuname) error {
+func (pathc *PathClnt) Rename(old, new string, uname sp.Tuname, uuid sp.Tuuid) error {
 	db.DPrintf(db.PATHCLNT, "Rename %v %v\n", old, new)
 	opath := path.Split(old)
 	npath := path.Split(new)
 
 	if len(opath) != len(npath) {
-		if err := pathc.renameat(old, new, uname); err != nil {
+		if err := pathc.renameat(old, new, uname, uuid); err != nil {
 			return err
 		}
 		return nil
 	}
 	for i, n := range opath[:len(opath)-1] {
 		if npath[i] != n {
-			if err := pathc.renameat(old, new, uname); err != nil {
+			if err := pathc.renameat(old, new, uname, uuid); err != nil {
 				return err
 			}
 			return nil
 		}
 	}
-	fid, err := pathc.walk(opath, uname, path.EndSlash(old), nil)
+	fid, err := pathc.walk(opath, uname, path.EndSlash(old), nil, uuid)
 	if err != nil {
 		return err
 	}
@@ -229,18 +229,18 @@ func (pathc *PathClnt) Rename(old, new string, uname sp.Tuname) error {
 }
 
 // Rename across directories of a single server using Renameat
-func (pathc *PathClnt) renameat(old, new string, uname sp.Tuname) *serr.Err {
+func (pathc *PathClnt) renameat(old, new string, uname sp.Tuname, uuid sp.Tuuid) *serr.Err {
 	db.DPrintf(db.PATHCLNT, "Renameat %v %v\n", old, new)
 	opath := path.Split(old)
 	npath := path.Split(new)
 	o := opath[len(opath)-1]
 	n := npath[len(npath)-1]
-	fid, err := pathc.walk(opath[:len(opath)-1], uname, path.EndSlash(old), nil)
+	fid, err := pathc.walk(opath[:len(opath)-1], uname, path.EndSlash(old), nil, uuid)
 	if err != nil {
 		return err
 	}
 	defer pathc.FidClnt.Clunk(fid)
-	fid1, err := pathc.walk(npath[:len(npath)-1], uname, path.EndSlash(old), nil)
+	fid1, err := pathc.walk(npath[:len(npath)-1], uname, path.EndSlash(old), nil, uuid)
 	if err != nil {
 		return err
 	}
@@ -248,16 +248,16 @@ func (pathc *PathClnt) renameat(old, new string, uname sp.Tuname) *serr.Err {
 	return pathc.FidClnt.Renameat(fid, o, fid1, n)
 }
 
-func (pathc *PathClnt) Remove(name string, uname sp.Tuname) error {
+func (pathc *PathClnt) Remove(name string, uname sp.Tuname, uuid sp.Tuuid) error {
 	db.DPrintf(db.PATHCLNT, "Remove %v\n", name)
 	pn := path.Split(name)
-	fid, rest, err := pathc.resolve(pn, uname, path.EndSlash(name))
+	fid, rest, err := pathc.resolve(pn, uname, path.EndSlash(name), uuid)
 	if err != nil {
 		return err
 	}
 	err = pathc.FidClnt.RemoveFile(fid, rest, path.EndSlash(name))
 	if Retry(err) {
-		fid, err = pathc.walk(pn, uname, path.EndSlash(name), nil)
+		fid, err = pathc.walk(pn, uname, path.EndSlash(name), nil, uuid)
 		if err != nil {
 			return err
 		}
@@ -269,10 +269,10 @@ func (pathc *PathClnt) Remove(name string, uname sp.Tuname) error {
 	return nil
 }
 
-func (pathc *PathClnt) Stat(name string, uname sp.Tuname) (*sp.Stat, error) {
+func (pathc *PathClnt) Stat(name string, uname sp.Tuname, uuid sp.Tuuid) (*sp.Stat, error) {
 	db.DPrintf(db.PATHCLNT, "Stat %v\n", name)
 	pn := path.Split(name)
-	target, rest, err := pathc.resolve(pn, uname, true)
+	target, rest, err := pathc.resolve(pn, uname, true, uuid)
 	if err != nil {
 		db.DPrintf(db.ALWAYS, "Stat resolve %v err %v\n", pn, err)
 	}
@@ -282,7 +282,7 @@ func (pathc *PathClnt) Stat(name string, uname sp.Tuname) (*sp.Stat, error) {
 		st.Name = pathc.FidClnt.Lookup(target).Servers().String()
 		return st, nil
 	} else {
-		fid, err := pathc.walk(path.Split(name), uname, path.EndSlash(name), nil)
+		fid, err := pathc.walk(path.Split(name), uname, path.EndSlash(name), nil, uuid)
 		if err != nil {
 			return nil, err
 		}
@@ -295,10 +295,10 @@ func (pathc *PathClnt) Stat(name string, uname sp.Tuname) (*sp.Stat, error) {
 	}
 }
 
-func (pathc *PathClnt) OpenWatch(pn string, uname sp.Tuname, mode sp.Tmode, w Watch) (sp.Tfid, error) {
+func (pathc *PathClnt) OpenWatch(pn string, uname sp.Tuname, mode sp.Tmode, w Watch, uuid sp.Tuuid) (sp.Tfid, error) {
 	db.DPrintf(db.PATHCLNT, "Open %v %v\n", pn, mode)
 	p := path.Split(pn)
-	fid, err := pathc.walk(p, uname, path.EndSlash(pn), w)
+	fid, err := pathc.walk(p, uname, path.EndSlash(pn), w, uuid)
 	if err != nil {
 		return sp.NoFid, err
 	}
@@ -309,8 +309,8 @@ func (pathc *PathClnt) OpenWatch(pn string, uname sp.Tuname, mode sp.Tmode, w Wa
 	return fid, nil
 }
 
-func (pathc *PathClnt) Open(path string, uname sp.Tuname, mode sp.Tmode) (sp.Tfid, error) {
-	return pathc.OpenWatch(path, uname, mode, nil)
+func (pathc *PathClnt) Open(path string, uname sp.Tuname, mode sp.Tmode, uuid sp.Tuuid) (sp.Tfid, error) {
+	return pathc.OpenWatch(path, uname, mode, nil, uuid)
 }
 
 func (pathc *PathClnt) SetDirWatch(fid sp.Tfid, path string, w Watch) error {
@@ -327,10 +327,10 @@ func (pathc *PathClnt) SetDirWatch(fid sp.Tfid, path string, w Watch) error {
 	return nil
 }
 
-func (pathc *PathClnt) SetRemoveWatch(pn string, uname sp.Tuname, w Watch) error {
+func (pathc *PathClnt) SetRemoveWatch(pn string, uname sp.Tuname, w Watch, uuid sp.Tuuid) error {
 	db.DPrintf(db.PATHCLNT, "SetRemoveWatch %v", pn)
 	p := path.Split(pn)
-	fid, err := pathc.walk(p, uname, path.EndSlash(pn), nil)
+	fid, err := pathc.walk(p, uname, path.EndSlash(pn), nil, uuid)
 	if err != nil {
 		db.DPrintf(db.PATHCLNT_ERR, "SetRemoveWatch: Walk %v err %v", pn, err)
 		return err
@@ -361,16 +361,16 @@ func Retry(err *serr.Err) bool {
 	return err.IsErrUnreachable() || err.IsErrUnknownfid() || err.IsMaybeSpecialElem()
 }
 
-func (pathc *PathClnt) GetFile(pn string, uname sp.Tuname, mode sp.Tmode, off sp.Toffset, cnt sp.Tsize) ([]byte, error) {
+func (pathc *PathClnt) GetFile(pn string, uname sp.Tuname, mode sp.Tmode, off sp.Toffset, cnt sp.Tsize, uuid sp.Tuuid) ([]byte, error) {
 	db.DPrintf(db.PATHCLNT, "GetFile %v %v\n", pn, mode)
 	p := path.Split(pn)
-	fid, rest, err := pathc.resolve(p, uname, path.EndSlash(pn))
+	fid, rest, err := pathc.resolve(p, uname, path.EndSlash(pn), uuid)
 	if err != nil {
 		return nil, err
 	}
 	data, err := pathc.FidClnt.GetFile(fid, rest, mode, off, cnt, path.EndSlash(pn))
 	if Retry(err) {
-		fid, err = pathc.walk(p, uname, path.EndSlash(pn), nil)
+		fid, err = pathc.walk(p, uname, path.EndSlash(pn), nil, uuid)
 		if err != nil {
 			return nil, err
 		}
@@ -386,10 +386,10 @@ func (pathc *PathClnt) GetFile(pn string, uname sp.Tuname, mode sp.Tmode, off sp
 }
 
 // Create or open file and write it
-func (pathc *PathClnt) PutFile(pn string, uname sp.Tuname, mode sp.Tmode, perm sp.Tperm, data []byte, off sp.Toffset, lid sp.TleaseId) (sp.Tsize, error) {
+func (pathc *PathClnt) PutFile(pn string, uname sp.Tuname, mode sp.Tmode, perm sp.Tperm, data []byte, off sp.Toffset, lid sp.TleaseId, uuid sp.Tuuid) (sp.Tsize, error) {
 	db.DPrintf(db.PATHCLNT, "PutFile %v %v %v\n", pn, mode, lid)
 	p := path.Split(pn)
-	fid, rest, err := pathc.resolve(p, uname, path.EndSlash(pn))
+	fid, rest, err := pathc.resolve(p, uname, path.EndSlash(pn), uuid)
 	if err != nil {
 		return 0, err
 	}
@@ -403,7 +403,7 @@ func (pathc *PathClnt) PutFile(pn string, uname sp.Tuname, mode sp.Tmode, perm s
 			base = path.Path{}
 			resolve = path.EndSlash(pn)
 		}
-		fid, err = pathc.walk(dir, uname, resolve, nil)
+		fid, err = pathc.walk(dir, uname, resolve, nil, uuid)
 		if err != nil {
 			return 0, err
 		}
@@ -418,16 +418,16 @@ func (pathc *PathClnt) PutFile(pn string, uname sp.Tuname, mode sp.Tmode, perm s
 	return cnt, nil
 }
 
-func (pathc *PathClnt) resolve(p path.Path, uname sp.Tuname, resolve bool) (sp.Tfid, path.Path, *serr.Err) {
-	if err, b := pathc.resolveRoot(p, uname); err != nil {
+func (pathc *PathClnt) resolve(p path.Path, uname sp.Tuname, resolve bool, uuid sp.Tuuid) (sp.Tfid, path.Path, *serr.Err) {
+	if err, b := pathc.resolveRoot(p, uname, uuid); err != nil {
 		db.DPrintf(db.ALWAYS, "resolveRoot %v err %v b %v\n", p, err, b)
 	}
 	return pathc.mnt.resolve(p, resolve)
 }
 
-func (pathc *PathClnt) LastMount(pn string, uname sp.Tuname) (path.Path, path.Path, error) {
+func (pathc *PathClnt) LastMount(pn string, uname sp.Tuname, uuid sp.Tuuid) (path.Path, path.Path, error) {
 	p := path.Split(pn)
-	_, left, err := pathc.resolve(p, uname, path.EndSlash(pn))
+	_, left, err := pathc.resolve(p, uname, path.EndSlash(pn), uuid)
 	if err != nil {
 		db.DPrintf(db.PATHCLNT_ERR, "resolve  %v err %v\n", pn, err)
 		return nil, nil, err

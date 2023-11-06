@@ -10,15 +10,6 @@ import (
 	"sigmaos/sessp"
 	sp "sigmaos/sigmap"
     "sigmaos/proc"
-
-	"os"
-	"net"
-	"bytes"
-	"strconv"
-	
-	"golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/agent"
-
 )
 
 //
@@ -103,53 +94,6 @@ func (fidc *FidClnt) Clunk(fid sp.Tfid) *serr.Err {
 }
 
 
-func authClnt(afid sp.Tfid, uname sp.Tuname, tree string) *serr.Err {
-
-    socket := os.Getenv("SSH_AUTH_SOCK")
-    db.DPrintf(db.JEFF, "stuff: %v", socket)
-    conn, err1 := net.Dial("unix", socket)
-    if(err1 != nil){
-        db.DPrintf(db.JEFF, "ERROR auth %v", err1)
-        return serr.MkErrError(err1)
-    }
-
-    str_afid := strconv.FormatUint(uint64(afid), 10)
-    username := str_afid + "--" + string(uname) + "--" + tree
-    agentClient := agent.NewClient(conn)
-    config := &ssh.ClientConfig{
-        User: username,
-        Auth: []ssh.AuthMethod{
-            // Use a callback rather than PublicKeys so we only consult the
-            // agent once theremote server wants it.
-            ssh.PublicKeysCallback(agentClient.Signers),
-        },
-    HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-    }
-
-    sshc, err1 := ssh.Dial("tcp", "localhost:2222", config)
-    if(err1 != nil){
-        db.DPrintf(db.JEFF, "ERROR auth %v", err1)
-        return serr.MkErrError(err1)
-    }
-
-    session, err1 := sshc.NewSession()
-    if(err1 != nil){
-        db.DPrintf(db.JEFF, "ERROR auth %v", err1)
-        return serr.MkErrError(err1)
-    }
-
-    var b bytes.Buffer
-    session.Stdout = &b
-
-    session.Run("")
-    db.DPrintf(db.TEST, "server: %s", b.String())    
-    
-    sshc.Close()
-
-	return nil
-}
-
-
 func (fidc *FidClnt) Auth(afid sp.Tfid, uname sp.Tuname, addrs sp.Taddrs, tree string) (sp.Tfid, *serr.Err){
     reply, err := fidc.pc.Auth(addrs, uname, afid, path.Split(tree))
     if err != nil {
@@ -159,36 +103,29 @@ func (fidc *FidClnt) Auth(afid sp.Tfid, uname sp.Tuname, addrs sp.Taddrs, tree s
 
     db.DPrintf(db.FIDCLNT, "Auth Response: %d", reply.Aqid)
 
-	authClnt(afid, uname, tree)
-
     return sp.Tfid(reply.Aqid), nil
 }
 
 
-func (fidc *FidClnt) Attach(uname sp.Tuname, cid sp.TclntId, addrs sp.Taddrs, pn, tree string) (sp.Tfid, *serr.Err) {
+func (fidc *FidClnt) Attach(uname sp.Tuname, cid sp.TclntId, addrs sp.Taddrs, pn, tree string, uuid sp.Tuuid) (sp.Tfid, *serr.Err) {
 	fid := fidc.allocFid()
-    db.DPrintf(db.FIDCLNT, "Attach: fid %d, uname %v, pn %v", fid, uname, pn)
+    db.DPrintf(db.FIDCLNT, "Attach: fid %d, uname %v, pn %v, uuid %v", fid, uname, pn, uuid)
     
     afid := sp.Tfid(1)
 	var err *serr.Err
     if proc.GetIsPrivilegedProc() == true || string(uname) == "kernel" || string(uname) == "" || string(uname) == "\x00"{
         afid = sp.NoFid
 		db.DPrintf(db.FIDCLNT, "Privileged Attach")
-    }else{
-        afid, err = fidc.Auth(fid, uname, addrs, tree)
-        if err != nil {
-            db.DPrintf(db.FIDCLNT_ERR, "Error attach %v: %v", addrs, err)
-        }
     }
-
-	reply, err := fidc.pc.Attach(addrs, uname, cid, fid, afid, path.Split(tree))
+	
+    reply, err := fidc.pc.Attach(addrs, uname, cid, fid, afid, path.Split(tree), uuid)
 	if err != nil {
 		db.DPrintf(db.FIDCLNT_ERR, "Error attach %v: %v", addrs, err)
 		fidc.freeFid(fid)
 		return sp.NoFid, err
 	}
 	pc := fidc.pc.MakeProtClnt(addrs)
-	fidc.fids.insert(fid, makeChannel(pc, uname, path.Split(pn), []*sp.Tqid{reply.Qid}))
+	fidc.fids.insert(fid, makeChannel(pc, uname, path.Split(pn), []*sp.Tqid{reply.Qid}, uuid))
 	return fid, nil
 }
 

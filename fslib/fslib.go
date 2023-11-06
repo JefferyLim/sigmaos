@@ -35,12 +35,13 @@ func MakeFsLib(uname sp.Tuname) (*FsLib, error) {
 }
 
 func (fl *FsLib) NamedAddr() sp.Taddrs {
-	mnt := fl.GetMntNamed(fl.Uname())
+    db.DPrintf(db.JEFF, "uname and uuid %v %v", fl.Uname(), fl.Uuid())
+	mnt := fl.GetMntNamed(fl.Uname(), fl.Uuid())
 	return mnt.Addr
 }
 
 func (fl *FsLib) MountTree(addrs sp.Taddrs, tree, mount string) error {
-	return fl.FdClient.MountTree(fl.Uname(), addrs, tree, mount)
+	return fl.FdClient.MountTree(fl.Uname(), addrs, tree, mount, fl.Uuid())
 }
 
 func (fl *FsLib) DetachAll() error {

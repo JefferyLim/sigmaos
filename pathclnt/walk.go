@@ -16,14 +16,14 @@ const (
 	MAXRETRY   = (fsetcd.SessionTTL + 1) * (1000 / TIMEOUT)
 )
 
-func (pathc *PathClnt) Walk(fid sp.Tfid, path path.Path, uname sp.Tuname) (sp.Tfid, *serr.Err) {
+func (pathc *PathClnt) Walk(fid sp.Tfid, path path.Path, uname sp.Tuname, uuid sp.Tuuid) (sp.Tfid, *serr.Err) {
 	ch := pathc.FidClnt.Lookup(fid)
 	if ch == nil {
 		return sp.NoFid, serr.MkErr(serr.TErrNotfound, fid)
 	}
 	p := ch.Path().AppendPath(path)
 	db.DPrintf(db.WALK, "Walk %v (ch %v)", p, ch.Path())
-	return pathc.walk(p, uname, true, nil)
+	return pathc.walk(p, uname, true, nil, uuid)
 }
 
 // WalkPath walks path and, on success, returns the fd walked to; it is
@@ -31,9 +31,9 @@ func (pathc *PathClnt) Walk(fid sp.Tfid, path path.Path, uname sp.Tuname) (sp.Tf
 // unreachable, it umounts the path it walked to, and starts over
 // again, perhaps switching to another replica.  (Note:
 // TestMaintainReplicationLevelCrashProcd test the fail-over case.)
-func (pathc *PathClnt) walk(path path.Path, uname sp.Tuname, resolve bool, w Watch) (sp.Tfid, *serr.Err) {
+func (pathc *PathClnt) walk(path path.Path, uname sp.Tuname, resolve bool, w Watch, uuid sp.Tuuid) (sp.Tfid, *serr.Err) {
 	for i := 0; i < MAXRETRY; i++ {
-		if err, cont := pathc.resolveRoot(path, uname); err != nil {
+		if err, cont := pathc.resolveRoot(path, uname, uuid); err != nil {
 			if cont && err.IsErrUnreachable() {
 				db.DPrintf(db.SVCMOUNT, "WalkPath: resolveRoot %v err %v\n", path, err)
 				time.Sleep(TIMEOUT * time.Millisecond)

@@ -5,14 +5,9 @@ import (
     "errors"
 
     sp "sigmaos/sigmap"
+    "github.com/google/uuid"
 
 )
-
-
-type authInfo struct {
-    afid sp.Tfid
-    authenticated bool
-}
 
 type authReq struct {
     fid sp.Tfid
@@ -20,19 +15,62 @@ type authReq struct {
     aname string
 }
 
+type authUser struct {
+    uuid string
+    pubkey string
+}
+
 type authMap struct {
     sync.Mutex
-    next sp.Tfid
-    authmap map[authReq]authInfo
+    authmap map[string]authUser
 }
 
 func mkAuthMap() * authMap {
     am := &authMap{}
-    am.authmap = make(map[authReq]authInfo)
-    am.next = 2
+    am.authmap = make(map[string]authUser)
     return am
 }
 
+func (am * authMap) createUser(uname string, pubkey string) {
+    am.Lock()
+    defer am.Unlock()
+
+    user := authUser{}
+    user.pubkey = pubkey
+
+    am.authmap[uname] = user
+}
+
+func (am * authMap) updateKey(uname string, pubkey string) error {
+    am.Lock()
+    defer am.Unlock()
+
+    found, ok := am.authmap[uname]
+    if(ok) {
+        found.pubkey = pubkey
+        am.authmap[uname] = found
+        
+        return nil
+    }
+    return errors.New("Can't find uname")
+
+}
+
+func (am * authMap) createUUID(uname string) (string, error) {
+    am.Lock()
+    defer am.Unlock()
+
+    found, ok := am.authmap[uname]
+    if(ok) {
+        found.uuid = uuid.New().String()
+        am.authmap[uname] = found
+        return found.uuid, nil
+    }
+
+    return "", errors.New("Can't find uname")
+
+}
+/*
 func (am * authMap) allocAuth(req authReq) sp.Tfid {
     am.Lock()
     defer am.Unlock()
@@ -72,3 +110,4 @@ func (am * authMap) lookup(req authReq) (authInfo, error) {
 
     return  found, errors.New("authMap lookup failed")
 }
+*/

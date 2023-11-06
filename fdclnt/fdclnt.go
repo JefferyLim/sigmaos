@@ -11,6 +11,9 @@ import (
 	"sigmaos/serr"
 	sp "sigmaos/sigmap"
 	"sigmaos/writer"
+    "sigmaos/proc"
+    "sigmaos/authclnt"
+
 )
 
 //
@@ -30,9 +33,11 @@ import (
 //
 
 type FdClient struct {
-	*pathclnt.PathClnt
+    *pathclnt.PathClnt
 	fds   *FdTable
 	uname sp.Tuname // the principal associated with this FdClient
+
+    uuid sp.Tuuid
 }
 
 func MakeFdClient(fsc *fidclnt.FidClnt, uname sp.Tuname, clntnet string, realm sp.Trealm, lip string, sz sp.Tsize) *FdClient {
@@ -40,7 +45,19 @@ func MakeFdClient(fsc *fidclnt.FidClnt, uname sp.Tuname, clntnet string, realm s
 	fdc.PathClnt = pathclnt.MakePathClnt(fsc, clntnet, realm, lip, sz)
 	fdc.fds = mkFdTable()
 	fdc.uname = uname
-	return fdc
+    
+    db.DPrintf(db.JEFF, "Doing authentication for uname: %v", uname)
+    if proc.GetIsPrivilegedProc() == true || string(uname) == "kernel" {
+        fdc.uuid = sp.Tuuid(string(""))
+    }else{
+        uuid, err := authclnt.Auth(string(uname))
+        if err == nil {
+            fdc.uuid = sp.Tuuid(uuid)
+            db.DPrintf(db.JEFF, "Got UUID: %v", uuid)
+        }
+    }
+	
+    return fdc
 }
 
 func (fdc *FdClient) String() string {
@@ -49,6 +66,11 @@ func (fdc *FdClient) String() string {
 	str += fmt.Sprintf("fsc %v\n", fdc.PathClnt)
 	return str
 }
+
+func (fdc *FdClient) Uuid() sp.Tuuid {
+    return fdc.uuid
+}
+
 
 func (fdc *FdClient) Uname() sp.Tuname {
 	return fdc.uname
@@ -75,11 +97,11 @@ func (fdc *FdClient) Qid(fd int) (*sp.Tqid, error) {
 }
 
 func (fdc *FdClient) Stat(name string) (*sp.Stat, error) {
-	return fdc.PathClnt.Stat(name, fdc.uname)
+	return fdc.PathClnt.Stat(name, fdc.uname, fdc.uuid)
 }
 
 func (fdc *FdClient) Create(path string, perm sp.Tperm, mode sp.Tmode) (int, error) {
-	fid, err := fdc.PathClnt.Create(path, fdc.uname, perm, mode, sp.NoLeaseId, sp.NoFence())
+	fid, err := fdc.PathClnt.Create(path, fdc.uname, perm, mode, sp.NoLeaseId, sp.NoFence(), fdc.uuid)
 	if err != nil {
 		return -1, err
 	}
@@ -88,7 +110,7 @@ func (fdc *FdClient) Create(path string, perm sp.Tperm, mode sp.Tmode) (int, err
 }
 
 func (fdc *FdClient) CreateEphemeral(path string, perm sp.Tperm, mode sp.Tmode, lid sp.TleaseId, f sp.Tfence) (int, error) {
-	fid, err := fdc.PathClnt.Create(path, fdc.uname, perm|sp.DMTMP, mode, lid, f)
+	fid, err := fdc.PathClnt.Create(path, fdc.uname, perm|sp.DMTMP, mode, lid, f, fdc.uuid)
 	if err != nil {
 		return -1, err
 	}
@@ -97,7 +119,7 @@ func (fdc *FdClient) CreateEphemeral(path string, perm sp.Tperm, mode sp.Tmode, 
 }
 
 func (fdc *FdClient) OpenWatch(path string, mode sp.Tmode, w pathclnt.Watch) (int, error) {
-	fid, err := fdc.PathClnt.OpenWatch(path, fdc.uname, mode, w)
+	fid, err := fdc.PathClnt.OpenWatch(path, fdc.uname, mode, w, fdc.uuid)
 	if err != nil {
 		return -1, err
 	}
@@ -126,23 +148,23 @@ func (fdc *FdClient) CreateOpen(path string, perm sp.Tperm, mode sp.Tmode) (int,
 }
 
 func (fdc *FdClient) SetRemoveWatch(pn string, w pathclnt.Watch) error {
-	return fdc.PathClnt.SetRemoveWatch(pn, fdc.uname, w)
+	return fdc.PathClnt.SetRemoveWatch(pn, fdc.uname, w, fdc.uuid)
 }
 
 func (fdc *FdClient) Rename(old, new string) error {
-	return fdc.PathClnt.Rename(old, new, fdc.uname)
+	return fdc.PathClnt.Rename(old, new, fdc.uname, fdc.uuid)
 }
 
 func (fdc *FdClient) Remove(pn string) error {
-	return fdc.PathClnt.Remove(pn, fdc.uname)
+	return fdc.PathClnt.Remove(pn, fdc.uname, fdc.uuid)
 }
 
 func (fdc *FdClient) GetFile(fname string) ([]byte, error) {
-	return fdc.PathClnt.GetFile(fname, fdc.uname, sp.OREAD, 0, sp.MAXGETSET)
+	return fdc.PathClnt.GetFile(fname, fdc.uname, sp.OREAD, 0, sp.MAXGETSET, fdc.uuid)
 }
 
 func (fdc *FdClient) PutFile(fname string, perm sp.Tperm, mode sp.Tmode, data []byte, off sp.Toffset, lid sp.TleaseId) (sp.Tsize, error) {
-	return fdc.PathClnt.PutFile(fname, fdc.uname, mode|sp.OWRITE, perm, data, off, lid)
+	return fdc.PathClnt.PutFile(fname, fdc.uname, mode|sp.OWRITE, perm, data, off, lid, fdc.uuid)
 }
 
 func (fdc *FdClient) MakeReader(fd int, path string, chunksz sp.Tsize) *reader.Reader {
@@ -224,5 +246,5 @@ func (fdc *FdClient) Seek(fd int, off sp.Toffset) error {
 }
 
 func (fdc *FdClient) PathLastSymlink(pn string) (path.Path, path.Path, error) {
-	return fdc.PathClnt.PathLastSymlink(pn, fdc.uname)
+	return fdc.PathClnt.PathLastSymlink(pn, fdc.uname, fdc.uuid)
 }

@@ -15,7 +15,7 @@ import (
     db "sigmaos/debug"
     sp "sigmaos/sigmap"
 	"testing"
-
+	"time"
     "golang.org/x/crypto/ssh"
     "golang.org/x/crypto/ssh/agent"
 
@@ -23,7 +23,7 @@ import (
 
 func TestAuthRun(t * testing.T) {
     ts := test.MakeTstateAll(t)
-
+	time.Sleep(1*time.Second)
     assert.Nil(t, ts.Shutdown())
 }
 

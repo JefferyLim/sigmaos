@@ -69,6 +69,7 @@ message Tattach {
         string uname = 3;
         string aname = 4;
         uint64 clntId = 5;
+        string uuid = 6;
 }
 
 message Rattach {

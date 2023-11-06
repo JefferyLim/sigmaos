@@ -90,7 +90,7 @@ func (ps *ProtSrv) Auth(args *sp.Tauth, rets *sp.Rauth) *sp.Rerror {
         if ps.tmp == 0 {
             fn := gopath.Join(sp.AUTHSRV, "jeff")
 
-            sts, err := ps.sc.FsLib.GetDir(sp.NAMED)
+            sts, err := ps.sc.FsLib.GetDir(".")
             if err != nil {
                 db.DPrintf(db.JEFF, "getdir %v", err)
             }
