@@ -139,7 +139,7 @@ func (ps *ProtSrv) Attach(args *sp.Tattach, rets *sp.Rattach, attach sps.AttachC
         if (ps.tmp == false) {
             rpcc, err := rpcclnt.MkRPCClnt([]*fslib.FsLib{ps.sc.FsLib}, fn)
             if err != nil {
-                db.DPrintf(db.JEFF, "rpc error: %v", err)
+                db.DPrintf(db.JEFF, "protsrv/protsrv.go rpcclnt.MkRPCClnt: %v", err)
             }else{
                 ps.tmp = true
                 ps.rpcc = rpcc

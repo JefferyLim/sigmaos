@@ -9,7 +9,6 @@ import (
 
 
 func main() {
-    db.DPrintf(db.JEFF, "maining %v", os.Args)
     if len(os.Args) != 2 {
         db.DFatalf("Usage :%v kernelId, %d", os.Args[0], len(os.Args))
     }

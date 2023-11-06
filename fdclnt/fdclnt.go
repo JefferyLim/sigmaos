@@ -45,14 +45,13 @@ func MakeFdClient(fsc *fidclnt.FidClnt, uname sp.Tuname, clntnet string, realm s
 	fdc.fds = mkFdTable()
 	fdc.uname = uname
     
-    db.DPrintf(db.JEFF, "Doing authentication for uname: %v", uname)
     if proc.GetIsPrivilegedProc() == true || string(uname) == "kernel" {
         fdc.uuid = sp.Tuuid(string("priv"))
     }else{
         uuid, err := authclnt.Auth(string(uname))
         if err == nil {
             fdc.uuid = sp.Tuuid(uuid)
-            db.DPrintf(db.JEFF, "Got UUID: %v", uuid)
+            db.DPrintf(db.JEFF, "fdclnt/fdclnt.go UUID: %v", uuid)
         }
 
         // An empty uuid is not acceptable at this point, so we should probably create an error here 

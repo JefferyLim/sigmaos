@@ -19,7 +19,7 @@ func Auth(uname string) (string, *serr.Err) {
     db.DPrintf(db.JEFF, "authclnt/authclnt.go: %v", socket)
     conn, err1 := net.Dial("unix", socket)
     if(err1 != nil){
-        db.DPrintf(db.JEFF, "ERROR auth %v", err1)
+        db.DPrintf(db.JEFF, "authclnt/authclnt.go net.Dial: %v", err1)
         return "", serr.MkErrError(err1)
     }
 
@@ -37,13 +37,13 @@ func Auth(uname string) (string, *serr.Err) {
 
     sshc, err1 := ssh.Dial("tcp", "localhost:2222", config)
     if(err1 != nil){
-        db.DPrintf(db.JEFF, "ERROR ssh.Dial %v", err1)
+        db.DPrintf(db.JEFF, "authclnt/authclnt.go ssh.Dial: %v", err1)
         return "", serr.MkErrError(err1)
     }
 
     session, err1 := sshc.NewSession()
     if(err1 != nil){
-        db.DPrintf(db.JEFF, "ERROR sshc.NewSession %v", err1)
+        db.DPrintf(db.JEFF, "authclnt/authclnt.go sshc.NewSession: %v", err1)
         return "", serr.MkErrError(err1)
     }
 
