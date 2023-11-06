@@ -114,8 +114,10 @@ func (fidc *FidClnt) Attach(uname sp.Tuname, cid sp.TclntId, addrs sp.Taddrs, pn
     afid := sp.Tfid(1)
 	var err *serr.Err
     if proc.GetIsPrivilegedProc() == true || string(uname) == "kernel" || string(uname) == "" || string(uname) == "\x00"{
-        afid = sp.NoFid
-		db.DPrintf(db.FIDCLNT, "Privileged Attach")
+        if(string(uuid) == "priv"){
+            afid = sp.NoFid
+		    db.DPrintf(db.FIDCLNT, "Privileged Attach")
+        }
     }
 	
     reply, err := fidc.pc.Attach(addrs, uname, cid, fid, afid, path.Split(tree), uuid)

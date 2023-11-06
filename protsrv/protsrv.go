@@ -40,7 +40,7 @@ type ProtSrv struct {
 	sid   sessp.Tsession
     sc    *sigmaclnt.SigmaClnt
     rpcc  *rpcclnt.RPCClnt
-    tmp   uint32                     // flag for rpcc 
+    tmp   bool                    // flag for rpcc 
 }
 
 func MakeProtServer(s sps.SessServer, sid sessp.Tsession) sps.Protsrv {
@@ -63,7 +63,7 @@ func MakeProtServer(s sps.SessServer, sid sessp.Tsession) sps.Protsrv {
     }
     ps.sc = sc
     ps.rpcc = &rpcclnt.RPCClnt{}
-    ps.tmp = 0
+    ps.tmp = false
     
     db.DPrintf(db.PROTSRV, "MakeProtSrv -> %v", ps)
 	return ps
@@ -81,7 +81,7 @@ func (ps *ProtSrv) Version(args *sp.Tversion, rets *sp.Rversion) *sp.Rerror {
 
 func (ps *ProtSrv) Auth(args *sp.Tauth, rets *sp.Rauth) *sp.Rerror {
     db.DPrintf(db.PROTSRV, "comparing %v vs %v", args.Tuname(), ps.ssrv.GetUname())
-
+/*
     // Skip authenticating if the Tuname is the same
     if(args.Tuname() == ps.ssrv.GetUname()) {
         db.DPrintf(db.PROTSRV, "stop authenticating yourself %v", args.Tuname())
@@ -124,29 +124,38 @@ func (ps *ProtSrv) Auth(args *sp.Tauth, rets *sp.Rauth) *sp.Rerror {
     }
 
 	return nil
-	//return sp.MkRerror(serr.MkErr(serr.TErrNotSupported, "Auth"))
+*/
+	return sp.MkRerror(serr.MkErr(serr.TErrNotSupported, "Auth"))
 }
 
 func (ps *ProtSrv) Attach(args *sp.Tattach, rets *sp.Rattach, attach sps.AttachClntF) *sp.Rerror {
     db.DPrintf(db.PROTSRV, "uname %v Attach %v sid %v", ps.ssrv.GetUname(), args, ps.sid)
 
-    /*
-    if(args.Afid != 4294967295){
+    if(sp.Tfid(args.Afid) == ^sp.Tfid(0) && args.Uuid == "priv"){
+        // Only possible if the attach call comes from a privileged proc
+        db.DPrintf(db.PROTSRV, "privileged proc attach")
+    }else{
         fn := gopath.Join(sp.AUTHSRV, "jeff")
-        // create a RPC client and query server
-        if(ps.temp == 0){
-            ps.temp = 15
-            db.DPrintf(db.JEFF, "EMPTY{")
-	        rpcc, _ := rpcclnt.MkRPCClnt([]*fslib.FsLib{ps.sc.FsLib}, fn)
-            ps.rpcc = rpcc
+        if (ps.tmp == false) {
+            rpcc, err := rpcclnt.MkRPCClnt([]*fslib.FsLib{ps.sc.FsLib}, fn)
+            if err != nil {
+                db.DPrintf(db.JEFF, "rpc error: %v", err)
+            }else{
+                ps.tmp = true
+                ps.rpcc = rpcc
+            }
+
         }
         
-        arg := authstr.EchoRequest{Text: "Hello World!"}
-	    res := authstr.EchoResult{}
-        err := ps.rpcc.RPC("AuthSrv.Echo", &arg, &res)
-        db.DPrintf(db.PROTSRV, "Jeff: %v %v", err, res)
+        // Only attempt to RPC if we have an RPC client
+        // Note, this is only an issue for the kernel proc
+        if ps.tmp == true {
+            arg := authstr.EchoRequest{Text: "Hello World!"}
+	        res := authstr.EchoResult{}
+            err := ps.rpcc.RPC("AuthSrv.Echo", &arg, &res)
+            db.DPrintf(db.PROTSRV, "Jeff: %v %v", err, res)
+        }
     }
-    */
     
     p := path.Split(args.Aname)
 	root, ctx := ps.ssrv.GetRootCtx(args.Tuname(), args.Aname, ps.sid, args.TclntId())

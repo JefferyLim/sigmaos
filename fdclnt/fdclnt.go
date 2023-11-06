@@ -36,8 +36,7 @@ type FdClient struct {
     *pathclnt.PathClnt
 	fds   *FdTable
 	uname sp.Tuname // the principal associated with this FdClient
-
-    uuid sp.Tuuid
+    uuid sp.Tuuid // session uuid
 }
 
 func MakeFdClient(fsc *fidclnt.FidClnt, uname sp.Tuname, clntnet string, realm sp.Trealm, lip string, sz sp.Tsize) *FdClient {
@@ -48,13 +47,15 @@ func MakeFdClient(fsc *fidclnt.FidClnt, uname sp.Tuname, clntnet string, realm s
     
     db.DPrintf(db.JEFF, "Doing authentication for uname: %v", uname)
     if proc.GetIsPrivilegedProc() == true || string(uname) == "kernel" {
-        fdc.uuid = sp.Tuuid(string(""))
+        fdc.uuid = sp.Tuuid(string("priv"))
     }else{
         uuid, err := authclnt.Auth(string(uname))
         if err == nil {
             fdc.uuid = sp.Tuuid(uuid)
             db.DPrintf(db.JEFF, "Got UUID: %v", uuid)
         }
+
+        // An empty uuid is not acceptable at this point, so we should probably create an error here 
     }
 	
     return fdc

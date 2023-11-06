@@ -35,7 +35,6 @@ func MakeFsLib(uname sp.Tuname) (*FsLib, error) {
 }
 
 func (fl *FsLib) NamedAddr() sp.Taddrs {
-    db.DPrintf(db.JEFF, "uname and uuid %v %v", fl.Uname(), fl.Uuid())
 	mnt := fl.GetMntNamed(fl.Uname(), fl.Uuid())
 	return mnt.Addr
 }
