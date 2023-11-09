@@ -31,7 +31,16 @@ const (
 	SIGMAJAEGERIP       = "SIGMAJAEGERIP"
 	SIGMAKERNEL         = "SIGMAKERNEL"
 	SIGMAUPROCD         = "SIGMAUPROCD"
+    SIGMAUUID           = "SIGMAUUID"
 )
+
+func GetUuid() string {
+    return os.Getenv(SIGMAUUID)
+}
+
+func SetUuid(uuid string) {
+    os.Setenv(SIGMAUUID, uuid)
+}
 
 func GenPid() Tpid {
 	return Tpid(rand.String(8))

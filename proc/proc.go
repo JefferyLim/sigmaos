@@ -82,6 +82,8 @@ func MakePrivProcPid(pid Tpid, program string, args []string, priv bool) *Proc {
 	p.setProcDir("NO_SCHEDD_IP")
 	p.Env = make(map[string]string)
 	p.setBaseEnv()
+
+    p.AppendEnv(SIGMAUUID, GetUuid())
 	return p
 }
 

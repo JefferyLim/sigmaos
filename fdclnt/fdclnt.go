@@ -39,7 +39,7 @@ type FdClient struct {
     uuid sp.Tuuid // session uuid
 }
 
-func MakeFdClient(fsc *fidclnt.FidClnt, uname sp.Tuname, clntnet string, realm sp.Trealm, lip string, sz sp.Tsize) *FdClient {
+func MakeFdClient(fsc *fidclnt.FidClnt, uname sp.Tuname, clntnet string, realm sp.Trealm, lip string, sz sp.Tsize, uuid sp.Tuuid) *FdClient {
 	fdc := &FdClient{}
 	fdc.PathClnt = pathclnt.MakePathClnt(fsc, clntnet, realm, lip, sz)
 	fdc.fds = mkFdTable()
@@ -48,10 +48,15 @@ func MakeFdClient(fsc *fidclnt.FidClnt, uname sp.Tuname, clntnet string, realm s
     if proc.GetIsPrivilegedProc() == true || string(uname) == "kernel" {
         fdc.uuid = sp.Tuuid(string("priv"))
     }else{
-        uuid, err := authclnt.Auth(string(uname))
-        if err == nil {
-            fdc.uuid = sp.Tuuid(uuid)
-            db.DPrintf(db.JEFF, "fdclnt/fdclnt.go UUID: %v", uuid)
+        if string(uuid) == "" {
+            uuid, err := authclnt.Auth(string(uname))
+            if err == nil {
+                fdc.uuid = sp.Tuuid(uuid)
+                db.DPrintf(db.JEFF, "fdclnt/fdclnt.go UUID: %v", uuid)
+                proc.SetUuid(string(uuid))
+            }
+        }else{
+            fdc.uuid = uuid
         }
 
         // An empty uuid is not acceptable at this point, so we should probably create an error here 
