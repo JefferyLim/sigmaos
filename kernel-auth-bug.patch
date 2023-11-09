@@ -1,0 +1,27 @@
+diff --git a/kernel/kernel.go b/kernel/kernel.go
+index 39ecb26a..f5ba2f76 100644
+--- a/kernel/kernel.go
++++ b/kernel/kernel.go
+@@ -56,6 +56,7 @@ func MakeKernel(p *Param, nameds sp.Taddrs) (*Kernel, error) {
+ 	k := mkKernel(p, nameds)
+ 	proc.SetProgram(os.Args[0])
+ 	proc.SetPid(proc.GenPid())
++	proc.SetRealm(sp.ROOTREALM)
+ 	ip, err := container.LocalIP()
+ 	if err != nil {
+ 		return nil, err
+diff --git a/proc/env.go b/proc/env.go
+index 74a78a06..af8ce3af 100644
+--- a/proc/env.go
++++ b/proc/env.go
+@@ -134,6 +134,10 @@ func GetSigmaJaegerIP() string {
+ 	return os.Getenv(SIGMAJAEGERIP)
+ }
+ 
++func SetRealm(r sp.Trealm) {
++	os.Setenv(SIGMAREALM, r.String())
++}
++
+ func GetRealm() sp.Trealm {
+ 	return sp.Trealm(os.Getenv(SIGMAREALM))
+ }
