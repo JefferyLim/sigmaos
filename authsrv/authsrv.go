@@ -19,11 +19,9 @@ import (
 	"strings"
 
 	"github.com/gliderlabs/ssh"
-	//gossh "golang.org/x/crypto/ssh"
-	AuthStr "sigmaos/authstructs"
-	//"github.com/google/uuid"'
+    
+    "sigmaos/authsrv/proto"
 	"context"
-
 	"github.com/aws/aws-sdk-go-v2/config"
 )
 
@@ -66,25 +64,26 @@ func RunAuthSrv(kernelId string) error {
 				user := strings.Split(path, "/")
 				username := user[1]
 
+                // Create the user in our struct
 				err = authsrv.auths.createUser(username, string(pubKey.Marshal()))
 				if err != nil {
 					return err
 				}
 
+                // Load in the shared aws credential files and search for the specific username  
 				cfg, err := config.LoadDefaultConfig(context.TODO(),
 					config.WithSharedConfigProfile(username))
 				if err != nil {
 					db.DFatalf("Failed to load SDK configuration %v", err)
 				}
 
+                // Retrieve the necessary credentials
 				region := cfg.Region
 				creds, err := cfg.Credentials.Retrieve(context.TODO())
-				db.DPrintf(db.JEFF, "s3 err: %v %v", username, err)
 				err = authsrv.auths.updateAWS(username, creds.AccessKeyID, creds.SecretAccessKey, region)
 				if err != nil {
 					db.DFatalf("Failed to update AWS", err)
 				}
-
 			}
 		}
 		return nil
@@ -135,13 +134,13 @@ func RunAuthSrv(kernelId string) error {
 }
 
 // find meaning of life for request
-func (authsrv *AuthSrv) Echo(ctx fs.CtxI, req AuthStr.EchoRequest, rep *AuthStr.EchoResult) error {
+func (authsrv *AuthSrv) Echo(ctx fs.CtxI, req proto.EchoRequest, rep *proto.EchoResult) error {
 	db.DPrintf(db.AUTHSRV, "==%v== Received Echo Request: %v\n", authsrv.sid, req)
 	rep.Text = req.Text
 	return nil
 }
 
-func (authsrv *AuthSrv) Auth(ctx fs.CtxI, req AuthStr.AuthRequest, rep *AuthStr.AuthResult) error {
+func (authsrv *AuthSrv) Auth(ctx fs.CtxI, req proto.AuthRequest, rep *proto.AuthResult) error {
 	db.DPrintf(db.AUTHSRV, "==%v== Received Auth Request: %v\n", authsrv.sid, req)
 
 	/*
@@ -158,7 +157,7 @@ func (authsrv *AuthSrv) Auth(ctx fs.CtxI, req AuthStr.AuthRequest, rep *AuthStr.
 	return nil
 }
 
-func (authsrv *AuthSrv) Validate(ctx fs.CtxI, req AuthStr.ValidRequest, rep *AuthStr.ValidResult) error {
+func (authsrv *AuthSrv) Validate(ctx fs.CtxI, req proto.ValidRequest, rep *proto.ValidResult) error {
 	db.DPrintf(db.AUTHSRV, "==%v== Received Validate Request: %v\n", authsrv.sid, req)
 
 	/*
@@ -178,7 +177,7 @@ func (authsrv *AuthSrv) Validate(ctx fs.CtxI, req AuthStr.ValidRequest, rep *Aut
 
 }
 
-func (authsrv *AuthSrv) GetAWS(ctx fs.CtxI, req AuthStr.AWSRequest, rep *AuthStr.AWSResult) error {
+func (authsrv *AuthSrv) GetAWS(ctx fs.CtxI, req proto.AWSRequest, rep *proto.AWSResult) error {
 	db.DPrintf(db.AUTHSRV, "==%v== Received AWS Request: %v\n", authsrv.sid, req)
 
 	found, ok := authsrv.auths.lookupUuid(req.Uuid)

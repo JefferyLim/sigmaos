@@ -10,7 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	authstr "sigmaos/authstructs"
+	authsrv "sigmaos/authsrv/proto"
 	db "sigmaos/debug"
 	"sigmaos/fs"
 	"sigmaos/path"
@@ -65,8 +65,8 @@ func (d *Dir) readRoot(ctx fs.CtxI) *serr.Err {
 		db.DPrintf(db.JEFF, "loading new client for %v", ctx.Uuid())
 
 		// Request authsrv for the AWS keys
-		arg := authstr.AWSRequest{Uuid: string(ctx.Uuid())}
-		res := authstr.AWSResult{}
+		arg := authsrv.AWSRequest{Uuid: string(ctx.Uuid())}
+		res := authsrv.AWSResult{}
 		err := fss3.rpcc.RPC("AuthSrv.GetAWS", &arg, &res)
 
 		if err != nil {
