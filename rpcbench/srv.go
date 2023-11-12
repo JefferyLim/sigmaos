@@ -7,8 +7,8 @@ import (
 	"sigmaos/fs"
 	"sigmaos/perf"
 	"sigmaos/proc"
-	"sigmaos/sigmasrv"
 	"sigmaos/rpcbench/proto"
+	"sigmaos/sigmasrv"
 	"sigmaos/tracing"
 )
 

@@ -6,8 +6,8 @@ import (
 	"sync"
 
 	db "sigmaos/debug"
-	sp "sigmaos/sigmap"
 	"sigmaos/proc"
+	sp "sigmaos/sigmap"
 )
 
 type FidMap struct {

@@ -5,11 +5,11 @@ import (
 
 	db "sigmaos/debug"
 	"sigmaos/path"
+	"sigmaos/proc"
 	"sigmaos/protclnt"
 	"sigmaos/serr"
 	"sigmaos/sessp"
 	sp "sigmaos/sigmap"
-    "sigmaos/proc"
 )
 
 //
@@ -93,34 +93,32 @@ func (fidc *FidClnt) Clunk(fid sp.Tfid) *serr.Err {
 	return nil
 }
 
+func (fidc *FidClnt) Auth(afid sp.Tfid, uname sp.Tuname, addrs sp.Taddrs, tree string) (sp.Tfid, *serr.Err) {
+	reply, err := fidc.pc.Auth(addrs, uname, afid, path.Split(tree))
+	if err != nil {
+		db.DPrintf(db.FIDCLNT_ERR, "Error auth %v: %v", addrs, err)
+		return sp.NoFid, err
+	}
 
-func (fidc *FidClnt) Auth(afid sp.Tfid, uname sp.Tuname, addrs sp.Taddrs, tree string) (sp.Tfid, *serr.Err){
-    reply, err := fidc.pc.Auth(addrs, uname, afid, path.Split(tree))
-    if err != nil {
-        db.DPrintf(db.FIDCLNT_ERR, "Error auth %v: %v", addrs, err)
-        return sp.NoFid, err
-    }
+	db.DPrintf(db.FIDCLNT, "Auth Response: %d", reply.Aqid)
 
-    db.DPrintf(db.FIDCLNT, "Auth Response: %d", reply.Aqid)
-
-    return sp.Tfid(reply.Aqid), nil
+	return sp.Tfid(reply.Aqid), nil
 }
-
 
 func (fidc *FidClnt) Attach(uname sp.Tuname, cid sp.TclntId, addrs sp.Taddrs, pn, tree string, uuid sp.Tuuid) (sp.Tfid, *serr.Err) {
 	fid := fidc.allocFid()
-    db.DPrintf(db.FIDCLNT, "Attach: fid %d, uname %v, pn %v, uuid %v", fid, uname, pn, uuid)
-    
-    afid := sp.Tfid(1)
+	db.DPrintf(db.FIDCLNT, "Attach: fid %d, uname %v, pn %v, uuid %v", fid, uname, pn, uuid)
+
+	afid := sp.Tfid(1)
 	var err *serr.Err
-    if proc.GetIsPrivilegedProc() == true || string(uname) == "kernel" || string(uname) == "" || string(uname) == "\x00"{
-        if(string(uuid) == "priv"){
-            afid = sp.NoFid
-		    db.DPrintf(db.FIDCLNT, "Privileged Attach")
-        }
-    }
-	
-    reply, err := fidc.pc.Attach(addrs, uname, cid, fid, afid, path.Split(tree), uuid)
+	if proc.GetIsPrivilegedProc() == true || string(uname) == "kernel" || string(uname) == "" || string(uname) == "\x00" {
+		if string(uuid) == "priv" {
+			afid = sp.NoFid
+			db.DPrintf(db.FIDCLNT, "Privileged Attach")
+		}
+	}
+
+	reply, err := fidc.pc.Attach(addrs, uname, cid, fid, afid, path.Split(tree), uuid)
 	if err != nil {
 		db.DPrintf(db.FIDCLNT_ERR, "Error attach %v: %v", addrs, err)
 		fidc.freeFid(fid)

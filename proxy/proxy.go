@@ -104,7 +104,7 @@ func (npc *NpConn) Attach(args *sp.Tattach, rets *sp.Rattach, attach sps.AttachC
 	npc.uname = sp.Tuname(u.Uid)
 
 	mnt := npc.pc.GetMntNamed("proxy", "")
-    fid, err := npc.fidc.Attach(npc.uname, npc.cid, mnt.Addr, "", "", "")
+	fid, err := npc.fidc.Attach(npc.uname, npc.cid, mnt.Addr, "", "", "")
 	if err != nil {
 		db.DPrintf(db.PROXY, "Attach args %v err %v\n", args, err)
 		return sp.MkRerror(err)

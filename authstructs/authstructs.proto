@@ -6,6 +6,7 @@ service AuthService {
   rpc Echo(EchoRequest) returns (EchoResult);
   rpc Auth(AuthRequest) returns (AuthResult);
   rpc Validate(ValidRequest) returns (ValidResult);
+  rpc AWS(AWSRequest) returns (AWSResult);
 }
 
 message EchoRequest {
@@ -35,4 +36,14 @@ message ValidRequest {
 
 message ValidResult {
   bool ok = 1;
+}
+
+message AWSRequest {
+  string uuid = 1;
+}
+
+message AWSResult {
+  string accesskeyid = 1;
+  string secretaccesskey = 2;
+  string region = 3;
 }

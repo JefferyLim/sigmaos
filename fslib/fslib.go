@@ -13,7 +13,7 @@ type FsLib struct {
 }
 
 func MakeFsLibAddrNet(uname sp.Tuname, realm sp.Trealm, lip string, addrs sp.Taddrs, clntnet string) (*FsLib, error) {
-	db.DPrintf(db.PORT, "MakeFsLibAddrRealm: uname %s lip %s addrs %v\n", uname, lip, addrs)
+	db.DPrintf(db.PORT, "MakeFsLibAddrRealm: uname %s lip %s addrs %v uuid %v\n", uname, lip, addrs, proc.GetUuid())
 	fl := &FsLib{
 		FdClient:  fdclnt.MakeFdClient(nil, uname, clntnet, realm, lip, sp.Tsize(10_000_000), sp.Tuuid(proc.GetUuid())),
 		namedAddr: addrs,

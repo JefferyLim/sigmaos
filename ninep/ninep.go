@@ -214,7 +214,7 @@ func (m Rversion) String() string {
 }
 
 type Tauth struct {
-	Afid   Tfid
+	Afid  Tfid
 	Uname string
 	Aname string
 }

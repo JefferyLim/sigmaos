@@ -1,16 +1,19 @@
 package fss3
 
 import (
-	"context"
+	//"context"
 	"sync"
 
-	"github.com/aws/aws-sdk-go-v2/config"
+	//"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 
+	gopath "path"
 	"sigmaos/container"
 	db "sigmaos/debug"
+	"sigmaos/fslib"
 	"sigmaos/path"
 	"sigmaos/perf"
+	"sigmaos/rpcclnt"
 	sp "sigmaos/sigmap"
 	"sigmaos/sigmasrv"
 )
@@ -19,11 +22,15 @@ var fss3 *Fss3
 
 type Fss3 struct {
 	*sigmasrv.SigmaSrv
+
 	mu     sync.Mutex
-	client *s3.Client
+	rpcc   *rpcclnt.RPCClnt
+	client map[sp.Tuuid]*s3.Client
 }
 
 func RunFss3(buckets []string) {
+
+	db.DPrintf(db.JEFF, "buckets? %v", buckets)
 	ip, err := container.LocalIP()
 	if err != nil {
 		db.DFatalf("LocalIP %v %v\n", sp.UX, err)
@@ -41,14 +48,16 @@ func RunFss3(buckets []string) {
 	defer p.Done()
 
 	fss3.SigmaSrv = ssrv
-	cfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithSharedConfigProfile("sigmaos"))
+
+	fss3.client = make(map[sp.Tuuid]*s3.Client)
+
+	fn := gopath.Join(sp.AUTHSRV, "jeff")
+	sc := ssrv.SigmaClnt()
+	rpcc, err := rpcclnt.MkRPCClnt([]*fslib.FsLib{sc.FsLib}, fn)
 	if err != nil {
-		db.DFatalf("Failed to load SDK configuration %v", err)
+		db.DFatalf("Error MkRPCCLnt: %v", err)
 	}
 
-	fss3.client = s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.UsePathStyle = true
-	})
+	fss3.rpcc = rpcc
 	ssrv.RunServer()
 }

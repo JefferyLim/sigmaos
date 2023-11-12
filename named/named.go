@@ -53,6 +53,7 @@ func Run(args []string) error {
 		return err
 	}
 	nd.SigmaClnt = sc
+	db.DPrintf(db.JEFF, "hello world %v", sc.Uuid())
 
 	pn := path.Join(sp.REALMS, nd.realm.String()) + ".sem"
 	sem := semclnt.MakeSemClnt(nd.FsLib, pn)
@@ -149,13 +150,13 @@ func (nd *Named) mkSrv() (sp.Tmount, error) {
 		ip = ":" + pi.Pb.RealmPort.String()
 	}
 
-    uname := sp.Tuname(proc.GetPid().String())
+	uname := sp.Tuname(proc.GetPid().String())
 	srv := fslibsrv.BootSrv(root, ip, nd.attach, nd.detach, nil, uname)
 	if srv == nil {
 		return sp.NullMount(), fmt.Errorf("BootSrv err %v\n", err)
 	}
 
-	ssrv := sigmasrv.MakeSigmaSrvSess(srv, sp.Tuname(proc.GetPid().String()), nd.SigmaClnt)
+	ssrv := sigmasrv.MakeSigmaSrvSess(srv, sp.Tuname(proc.GetPid().String()), nd.SigmaClnt, "")
 	if err := ssrv.MountRPCSrv(newLeaseSrv(nd.fs)); err != nil {
 		return sp.NullMount(), err
 	}

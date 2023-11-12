@@ -48,7 +48,7 @@ type SessSrv struct {
 	fencefs  fs.Dir
 	srv      *netsrv.NetServer
 	qlen     stats.Tcounter
-    uname    sp.Tuname
+	uname    sp.Tuname
 }
 
 func MakeSessSrv(root fs.Dir, addr string, mkps sps.MkProtServer, attachf sps.AttachClntF, detachf sps.DetachClntF, et *ephemeralmap.EphemeralMap, fencefs fs.Dir, uname sp.Tuname) *SessSrv {
@@ -72,13 +72,13 @@ func MakeSessSrv(root fs.Dir, addr string, mkps sps.MkProtServer, attachf sps.At
 	ssrv.srv = netsrv.MakeNetServer(ssrv, addr, spcodec.WriteFcallAndData, spcodec.ReadUnmarshalFcallAndData)
 	ssrv.sm = sessstatesrv.MakeSessionMgr(ssrv.st, ssrv.SrvFcall)
 
-    ssrv.uname = uname
+	ssrv.uname = uname
 	db.DPrintf(db.SESSSRV, "Listen on address: %v", ssrv.srv.MyAddr())
 	return ssrv
 }
 
 func (ssrv *SessSrv) GetUname() sp.Tuname {
-    return ssrv.uname
+	return ssrv.uname
 }
 
 func (ssrv *SessSrv) GetPathLockTable() *lockmap.PathLockTable {
@@ -153,8 +153,8 @@ func (ssrv *SessSrv) GetVersionTable() *version.VersionTable {
 	return ssrv.vt
 }
 
-func (ssrv *SessSrv) GetRootCtx(uname sp.Tuname, aname string, sessid sessp.Tsession, clntid sp.TclntId) (fs.Dir, fs.CtxI) {
-	return ssrv.dirover, ctx.MkCtx(uname, sessid, clntid, ssrv.sct, ssrv.fencefs)
+func (ssrv *SessSrv) GetRootCtx(uname sp.Tuname, aname string, sessid sessp.Tsession, clntid sp.TclntId, uuid sp.Tuuid) (fs.Dir, fs.CtxI) {
+	return ssrv.dirover, ctx.MkCtx(uname, sessid, clntid, ssrv.sct, ssrv.fencefs, uuid)
 }
 
 // New session or new connection for existing session

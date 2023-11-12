@@ -140,8 +140,8 @@ func (ssrv *SigmaSrv) makeRPCSrv(svci any) error {
 	return nil
 }
 
-func MakeSigmaSrvSess(sesssrv *sesssrv.SessSrv, uname sp.Tuname, sc *sigmaclnt.SigmaClnt) *SigmaSrv {
-	mfs := memfssrv.MakeMemFsSrv(uname, "", sesssrv, sc, nil)
+func MakeSigmaSrvSess(sesssrv *sesssrv.SessSrv, uname sp.Tuname, sc *sigmaclnt.SigmaClnt, uuid sp.Tuuid) *SigmaSrv {
+	mfs := memfssrv.MakeMemFsSrv(uname, "", sesssrv, sc, nil, uuid)
 	return newSigmaSrv(mfs)
 }
 
@@ -152,7 +152,7 @@ func MakeSigmaSrvRoot(root fs.Dir, addr, path string, uname sp.Tuname) (*SigmaSr
 	}
 	et := ephemeralmap.NewEphemeralMap()
 	sesssrv := fslibsrv.BootSrv(root, addr, nil, nil, et, uname)
-	ssrv := newSigmaSrv(memfssrv.MakeMemFsSrv(uname, "", sesssrv, sc, nil))
+	ssrv := newSigmaSrv(memfssrv.MakeMemFsSrv(uname, "", sesssrv, sc, nil, ""))
 	fslibsrv.Post(sesssrv, sc, path)
 	return ssrv, nil
 }

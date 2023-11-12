@@ -83,7 +83,7 @@ func MakePrivProcPid(pid Tpid, program string, args []string, priv bool) *Proc {
 	p.Env = make(map[string]string)
 	p.setBaseEnv()
 
-    p.AppendEnv(SIGMAUUID, GetUuid())
+	p.AppendEnv(SIGMAUUID, GetUuid())
 	return p
 }
 

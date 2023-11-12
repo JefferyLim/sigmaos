@@ -36,10 +36,10 @@ type MemFs struct {
 	pn  string
 }
 
-func MakeMemFsSrv(uname sp.Tuname, pn string, srv *sesssrv.SessSrv, sc *sigmaclnt.SigmaClnt, fencefs fs.Dir) *MemFs {
+func MakeMemFsSrv(uname sp.Tuname, pn string, srv *sesssrv.SessSrv, sc *sigmaclnt.SigmaClnt, fencefs fs.Dir, uuid sp.Tuuid) *MemFs {
 	mfs := &MemFs{
 		SessSrv: srv,
-		ctx:     ctx.MkCtx(uname, 0, sp.NoClntId, nil, fencefs),
+		ctx:     ctx.MkCtx(uname, 0, sp.NoClntId, nil, fencefs, uuid),
 		plt:     srv.GetPathLockTable(),
 		sc:      sc,
 		pn:      pn,

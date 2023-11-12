@@ -31,15 +31,15 @@ const (
 	SIGMAJAEGERIP       = "SIGMAJAEGERIP"
 	SIGMAKERNEL         = "SIGMAKERNEL"
 	SIGMAUPROCD         = "SIGMAUPROCD"
-    SIGMAUUID           = "SIGMAUUID"
+	SIGMAUUID           = "SIGMAUUID"
 )
 
 func GetUuid() string {
-    return os.Getenv(SIGMAUUID)
+	return os.Getenv(SIGMAUUID)
 }
 
 func SetUuid(uuid string) {
-    os.Setenv(SIGMAUUID, uuid)
+	os.Setenv(SIGMAUUID, uuid)
 }
 
 func GenPid() Tpid {
@@ -141,6 +141,10 @@ func SetSigmaJaegerIP(ip string) {
 
 func GetSigmaJaegerIP() string {
 	return os.Getenv(SIGMAJAEGERIP)
+}
+
+func SetRealm(r sp.Trealm) {
+	os.Setenv(SIGMAREALM, r.String())
 }
 
 func GetRealm() sp.Trealm {

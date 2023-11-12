@@ -3,17 +3,16 @@ package fdclnt
 import (
 	"fmt"
 
+	"sigmaos/authclnt"
 	db "sigmaos/debug"
 	"sigmaos/fidclnt"
 	"sigmaos/path"
 	"sigmaos/pathclnt"
+	"sigmaos/proc"
 	"sigmaos/reader"
 	"sigmaos/serr"
 	sp "sigmaos/sigmap"
 	"sigmaos/writer"
-    "sigmaos/proc"
-    "sigmaos/authclnt"
-
 )
 
 //
@@ -33,10 +32,10 @@ import (
 //
 
 type FdClient struct {
-    *pathclnt.PathClnt
+	*pathclnt.PathClnt
 	fds   *FdTable
 	uname sp.Tuname // the principal associated with this FdClient
-    uuid sp.Tuuid // session uuid
+	uuid  sp.Tuuid  // the principal's uuid
 }
 
 func MakeFdClient(fsc *fidclnt.FidClnt, uname sp.Tuname, clntnet string, realm sp.Trealm, lip string, sz sp.Tsize, uuid sp.Tuuid) *FdClient {
@@ -44,25 +43,30 @@ func MakeFdClient(fsc *fidclnt.FidClnt, uname sp.Tuname, clntnet string, realm s
 	fdc.PathClnt = pathclnt.MakePathClnt(fsc, clntnet, realm, lip, sz)
 	fdc.fds = mkFdTable()
 	fdc.uname = uname
-    
-    if proc.GetIsPrivilegedProc() == true || string(uname) == "kernel" {
-        fdc.uuid = sp.Tuuid(string("priv"))
-    }else{
-        if string(uuid) == "" {
-            uuid, err := authclnt.Auth(string(uname))
-            if err == nil {
-                fdc.uuid = sp.Tuuid(uuid)
-                db.DPrintf(db.JEFF, "fdclnt/fdclnt.go UUID: %v", uuid)
-                proc.SetUuid(string(uuid))
-            }
-        }else{
-            fdc.uuid = uuid
-        }
 
-        // An empty uuid is not acceptable at this point, so we should probably create an error here 
-    }
-	
-    return fdc
+	// Inherit the UUID from the caller
+	fdc.uuid = uuid
+
+	if proc.GetIsPrivilegedProc() == true || string(uname) == "kernel" {
+		// Temporary solution of establishing a privileged UUID
+		fdc.uuid = sp.Tuuid(string("priv"))
+	} else {
+		// non-Privileged procs must obtain a UUID through the authclnt
+		if string(uuid) == "" {
+			uuid, err := authclnt.Auth(string(uname))
+			if err == nil {
+				fdc.uuid = sp.Tuuid(uuid)
+
+				// Set the UUID as an environment variable
+				// This is to make passing UUID to children easier
+				// Ideally, one would pass it as a variable
+				proc.SetUuid(string(uuid))
+			}
+		}
+	}
+
+	// An empty uuid is not acceptable at this point, so we should probably create an error here
+	return fdc
 }
 
 func (fdc *FdClient) String() string {
@@ -73,9 +77,8 @@ func (fdc *FdClient) String() string {
 }
 
 func (fdc *FdClient) Uuid() sp.Tuuid {
-    return fdc.uuid
+	return fdc.uuid
 }
-
 
 func (fdc *FdClient) Uname() sp.Tuname {
 	return fdc.uname

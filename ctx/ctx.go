@@ -13,18 +13,23 @@ type Ctx struct {
 	clntid  sp.TclntId
 	sct     *sesscond.SessCondTable
 	fencefs fs.Dir
+	uuid    sp.Tuuid
 }
 
-func MkCtx(uname sp.Tuname, sessid sessp.Tsession, clntid sp.TclntId, sct *sesscond.SessCondTable, fencefs fs.Dir) *Ctx {
-	return &Ctx{uname: uname, sessid: sessid, clntid: clntid, sct: sct, fencefs: fencefs}
+func MkCtx(uname sp.Tuname, sessid sessp.Tsession, clntid sp.TclntId, sct *sesscond.SessCondTable, fencefs fs.Dir, uuid sp.Tuuid) *Ctx {
+	return &Ctx{uname: uname, sessid: sessid, clntid: clntid, sct: sct, fencefs: fencefs, uuid: uuid}
 }
 
 func MkCtxNull() *Ctx {
-	return MkCtx("", 0, sp.NoClntId, nil, nil)
+	return MkCtx("", 0, sp.NoClntId, nil, nil, "")
 }
 
 func (ctx *Ctx) Uname() sp.Tuname {
 	return ctx.uname
+}
+
+func (ctx *Ctx) Uuid() sp.Tuuid {
+	return ctx.uuid
 }
 
 func (ctx *Ctx) SessionId() sessp.Tsession {

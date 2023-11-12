@@ -17,6 +17,7 @@ type MakeDirF func(Inode, MakeInodeF) Inode
 
 type CtxI interface {
 	Uname() sp.Tuname
+	Uuid() sp.Tuuid
 	SessionId() sessp.Tsession
 	SessCondTable() *sesscond.SessCondTable
 	ClntId() sp.TclntId

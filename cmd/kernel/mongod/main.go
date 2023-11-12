@@ -2,9 +2,9 @@ package main
 
 import (
 	"os"
-	"sigmaos/mongod"
 	"runtime/debug"
 	dbg "sigmaos/debug"
+	"sigmaos/mongod"
 )
 
 func main() {

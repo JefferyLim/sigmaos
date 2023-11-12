@@ -116,8 +116,8 @@ const (
 	MONGO                    = "MONGO"
 	MONGO_ERR                = "MONGO_ERR"
 	PROXY                    = "PROXY"
-    AUTHSRV                  = "AUTHSRV"
-    AUTHSRV_ERR              = "AUTHSRV" + ERR
+	AUTHSRV                  = "AUTHSRV"
+	AUTHSRV_ERR              = "AUTHSRV" + ERR
 )
 
 // Realm
@@ -237,5 +237,5 @@ const (
 
 // Jeff
 const (
-    JEFF Tselector = "JEFF"
+	JEFF Tselector = "JEFF"
 )

@@ -63,14 +63,14 @@ func (o *Obj) SetSize(sz sp.Tlength) {
 	o.sz = sz
 }
 
-func (o *Obj) readHead(fss3 *Fss3) *serr.Err {
+func (o *Obj) readHead(fss3 *Fss3, uuid sp.Tuuid) *serr.Err {
 	key := o.key.String()
 	key = toDot(key)
 	input := &s3.HeadObjectInput{
 		Bucket: &o.bucket,
 		Key:    &key,
 	}
-	result, err := fss3.client.HeadObject(context.TODO(), input)
+	result, err := fss3.client[uuid].HeadObject(context.TODO(), input)
 	if err != nil {
 		db.DPrintf(db.S3, "readHead: %v err %v\n", key, err)
 		return serr.MkErrError(err)
@@ -91,8 +91,8 @@ func makeFsObj(bucket string, perm sp.Tperm, key path.Path) fs.FsObj {
 	}
 }
 
-func (o *Obj) fill() *serr.Err {
-	if err := o.readHead(fss3); err != nil {
+func (o *Obj) fill(uuid sp.Tuuid) *serr.Err {
+	if err := o.readHead(fss3, uuid); err != nil {
 		return err
 	}
 	return nil
@@ -125,7 +125,7 @@ func (o *Obj) Parent() fs.Dir {
 
 func (o *Obj) Stat(ctx fs.CtxI) (*sp.Stat, *serr.Err) {
 	db.DPrintf(db.S3, "Stat: %v\n", o)
-	if err := o.fill(); err != nil {
+	if err := o.fill(ctx.Uuid()); err != nil {
 		db.DPrintf(db.S3, "Stat: %v err %v\n", o, err)
 		return nil, err
 	}
@@ -137,11 +137,11 @@ func (o *Obj) Stat(ctx fs.CtxI) (*sp.Stat, *serr.Err) {
 // XXX Check permissions?
 func (o *Obj) Open(ctx fs.CtxI, m sp.Tmode) (fs.FsObj, *serr.Err) {
 	db.DPrintf(db.S3, "open %v (%T) %v\n", o, o, m)
-	if err := o.fill(); err != nil {
+	if err := o.fill(ctx.Uuid()); err != nil {
 		return nil, err
 	}
 	if m == sp.OWRITE {
-		o.setupWriter()
+		o.setupWriter(ctx.Uuid())
 	}
 	return o, nil
 }
@@ -159,7 +159,7 @@ func (o *Obj) Close(ctx fs.CtxI, m sp.Tmode) *serr.Err {
 	return nil
 }
 
-func (o *Obj) s3Read(off, cnt int) (io.ReadCloser, sp.Tlength, *serr.Err) {
+func (o *Obj) s3Read(off, cnt int, uuid sp.Tuuid) (io.ReadCloser, sp.Tlength, *serr.Err) {
 	key := o.key.String()
 	region := ""
 	if off != 0 || sp.Tlength(cnt) < o.sz {
@@ -171,7 +171,7 @@ func (o *Obj) s3Read(off, cnt int) (io.ReadCloser, sp.Tlength, *serr.Err) {
 		Key:    &key,
 		Range:  &region,
 	}
-	result, err := fss3.client.GetObject(context.TODO(), input)
+	result, err := fss3.client[uuid].GetObject(context.TODO(), input)
 	if err != nil {
 		return nil, 0, serr.MkErrError(err)
 	}
@@ -188,7 +188,7 @@ func (o *Obj) Read(ctx fs.CtxI, off sp.Toffset, cnt sp.Tsize, f sp.Tfence) ([]by
 	if sp.Tlength(off) >= o.sz {
 		return nil, nil
 	}
-	rdr, n, err := o.s3Read(int(off), int(cnt))
+	rdr, n, err := o.s3Read(int(off), int(cnt), ctx.Uuid())
 	if err != nil {
 		return nil, err
 	}
@@ -201,13 +201,13 @@ func (o *Obj) Read(ctx fs.CtxI, off sp.Toffset, cnt sp.Tsize, f sp.Tfence) ([]by
 	return b, nil
 }
 
-func (o *Obj) s3Create() *serr.Err {
+func (o *Obj) s3Create(uuid sp.Tuuid) *serr.Err {
 	key := o.key.String()
 	input := &s3.PutObjectInput{
 		Bucket: &o.bucket,
 		Key:    &key,
 	}
-	if _, err := fss3.client.PutObject(context.TODO(), input); err != nil {
+	if _, err := fss3.client[uuid].PutObject(context.TODO(), input); err != nil {
 		return serr.MkErrError(err)
 	}
 	return nil
@@ -217,17 +217,17 @@ func (o *Obj) s3Create() *serr.Err {
 // Write using an uploader thread
 //
 
-func (o *Obj) setupWriter() {
+func (o *Obj) setupWriter(uuid sp.Tuuid) {
 	db.DPrintf(db.S3, "%p: setupWriter\n", o)
 	o.off = 0
 	o.ch = make(chan error)
 	o.r, o.w = io.Pipe()
-	go o.writer(o.ch)
+	go o.writer(o.ch, uuid)
 }
 
-func (o *Obj) writer(ch chan error) {
+func (o *Obj) writer(ch chan error, uuid sp.Tuuid) {
 	key := o.key.String()
-	uploader := manager.NewUploader(fss3.client)
+	uploader := manager.NewUploader(fss3.client[uuid])
 	_, err := uploader.Upload(context.TODO(), &s3.PutObjectInput{
 		Bucket: &o.bucket,
 		Key:    &key,

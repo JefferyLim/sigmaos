@@ -36,15 +36,15 @@ func MakeMemFsPortClnt(pn, port string, sc *sigmaclnt.SigmaClnt) (*MemFs, error)
 }
 
 func MakeMemFsPortClntFence(pn, port string, sc *sigmaclnt.SigmaClnt, fencefs fs.Dir) (*MemFs, error) {
-	ctx := ctx.MkCtx("", 0, sp.NoClntId, nil, fencefs)
+	ctx := ctx.MkCtx("", 0, sp.NoClntId, nil, fencefs, "")
 	root := dir.MkRootDir(ctx, memfs.MakeInode, nil)
 
-    uname := sc.Uname()
+	uname := sc.Uname()
 	srv, err := fslibsrv.MakeSrv(root, pn, port, sc, fencefs, uname)
 	if err != nil {
 		return nil, err
 	}
-	mfs := MakeMemFsSrv(sc.Uname(), pn, srv, sc, nil)
+	mfs := MakeMemFsSrv(sc.Uname(), pn, srv, sc, nil, sc.Uuid())
 	return mfs, nil
 }
 

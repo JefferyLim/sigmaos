@@ -1,13 +1,13 @@
 package protclnt
 
 import (
-	"sync/atomic"
 	"sigmaos/path"
 	"sigmaos/rand"
 	"sigmaos/serr"
 	"sigmaos/sessclnt"
 	"sigmaos/sessp"
 	sp "sigmaos/sigmap"
+	"sync/atomic"
 )
 
 // Each proc has a unique client ID.
@@ -50,21 +50,21 @@ func (clnt *Clnt) CallServer(addrs sp.Taddrs, args sessp.Tmsg, data []byte) (*se
 	return reply, nil
 }
 
-func (clnt *Clnt) Auth(addrs sp.Taddrs, uname sp.Tuname, fid sp.Tfid, path path.Path)(*sp.Rauth, *serr.Err) {
-    args := sp.MkTauth(fid, uname, path)
-    reply, err := clnt.CallServer(addrs, args, nil)
-    if err != nil {
-        return nil, err
-    }
-    msg, ok := reply.Msg.(*sp.Rauth)
-    if !ok {
-        return nil, serr.MkErr(serr.TErrBadFcall, "clnt")
-    }
-    return msg, nil
+func (clnt *Clnt) Auth(addrs sp.Taddrs, uname sp.Tuname, fid sp.Tfid, path path.Path) (*sp.Rauth, *serr.Err) {
+	args := sp.MkTauth(fid, uname, path)
+	reply, err := clnt.CallServer(addrs, args, nil)
+	if err != nil {
+		return nil, err
+	}
+	msg, ok := reply.Msg.(*sp.Rauth)
+	if !ok {
+		return nil, serr.MkErr(serr.TErrBadFcall, "clnt")
+	}
+	return msg, nil
 }
 
 func (clnt *Clnt) Attach(addrs sp.Taddrs, uname sp.Tuname, cid sp.TclntId, fid sp.Tfid, afid sp.Tfid, path path.Path, uuid sp.Tuuid) (*sp.Rattach, *serr.Err) {
-    args := sp.MkTattach(fid, afid, uname, cid, path, uuid)
+	args := sp.MkTattach(fid, afid, uname, cid, path, uuid)
 	reply, err := clnt.CallServer(addrs, args, nil)
 	if err != nil {
 		return nil, err

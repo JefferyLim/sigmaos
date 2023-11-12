@@ -2,11 +2,11 @@ package main
 
 import (
 	"os"
-	"strings"
 	"sigmaos/boot"
 	db "sigmaos/debug"
 	"sigmaos/kernel"
 	sp "sigmaos/sigmap"
+	"strings"
 )
 
 func main() {

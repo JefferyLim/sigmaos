@@ -7,8 +7,10 @@ import (
 	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-
+	authstr "sigmaos/authstructs"
 	db "sigmaos/debug"
 	"sigmaos/fs"
 	"sigmaos/path"
@@ -55,7 +57,44 @@ func makeDir(bucket string, key path.Path, perm sp.Tperm) *Dir {
 func (d *Dir) readRoot(ctx fs.CtxI) *serr.Err {
 	db.DPrintf(db.S3, "readRoot %v\n", d)
 	input := &s3.ListBucketsInput{}
-	result, err := fss3.client.ListBuckets(context.TODO(), input)
+
+	// Search for particular client
+	// This seems to be the first instance of when a client would get used
+	_, ok := fss3.client[ctx.Uuid()]
+	if ok == false {
+		db.DPrintf(db.JEFF, "loading new client for %v", ctx.Uuid())
+
+		// Request authsrv for the AWS keys
+		arg := authstr.AWSRequest{Uuid: string(ctx.Uuid())}
+		res := authstr.AWSResult{}
+		err := fss3.rpcc.RPC("AuthSrv.GetAWS", &arg, &res)
+
+		if err != nil {
+			return serr.MkErr(serr.TErrError, err)
+		}
+
+		db.DPrintf(db.S3, "Jeff: %v %v", err, res)
+
+		aws_access_key_id := res.Accesskeyid
+		aws_secret_access_key := res.Secretaccesskey
+
+		cfg, err := config.LoadDefaultConfig(context.TODO(),
+			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(aws_access_key_id, aws_secret_access_key, "")),
+		)
+
+		// If we're unable to load the config, then we're probably not going to be able to create a client
+		// Create an error here and exit
+		if err != nil {
+			return serr.MkErr(serr.TErrError, err)
+		}
+		cfg.Region = res.Region
+
+		fss3.client[ctx.Uuid()] = s3.NewFromConfig(cfg, func(o *s3.Options) {
+			o.UsePathStyle = true
+		})
+	}
+
+	result, err := fss3.client[ctx.Uuid()].ListBuckets(context.TODO(), input)
 	if err != nil {
 		return serr.MkErr(serr.TErrError, err)
 	} else {
@@ -97,7 +136,7 @@ func (d *Dir) s3ReadDir(ctx fs.CtxI, fss3 *Fss3) *serr.Err {
 		Delimiter: aws.String("/"),
 	}
 	db.DPrintf(db.S3, "s3ReadDir %v params %v\n", d, params)
-	p := s3.NewListObjectsV2Paginator(fss3.client, params,
+	p := s3.NewListObjectsV2Paginator(fss3.client[ctx.Uuid()], params,
 		func(o *s3.ListObjectsV2PaginatorOptions) {
 			if v := int32(maxKeys); v != 0 {
 				o.Limit = v
@@ -178,7 +217,7 @@ func (d *Dir) lookupPath(ctx fs.CtxI, p path.Path) ([]fs.FsObj, fs.FsObj, path.P
 	db.DPrintf(db.S3, "%v: lookupPath d %v p %v\n", ctx, d, p)
 	// maybe p is f a file
 	o := makeObj(d.bucket, d.key.Copy().AppendPath(p), sp.Tperm(0777))
-	if err := o.readHead(fss3); err == nil {
+	if err := o.readHead(fss3, ctx.Uuid()); err == nil {
 		// name is a file; done
 		db.DPrintf(db.S3, "Lookup return %q o %v\n", p, o)
 		os := append(mkObjs(o), o)
@@ -271,7 +310,7 @@ func (d *Dir) CreateDir(ctx fs.CtxI, name string, perm sp.Tperm) (fs.FsObj, *ser
 		Bucket: &d.bucket,
 		Key:    &key,
 	}
-	_, err := fss3.client.PutObject(context.TODO(), input)
+	_, err := fss3.client[ctx.Uuid()].PutObject(context.TODO(), input)
 	if err != nil {
 		return nil, serr.MkErrError(err)
 	}
@@ -298,11 +337,11 @@ func (d *Dir) Create(ctx fs.CtxI, name string, perm sp.Tperm, m sp.Tmode, lid sp
 		return obj, nil
 	}
 	d.dents.Insert(name, perm)
-	if err := o.s3Create(); err != nil {
+	if err := o.s3Create(ctx.Uuid()); err != nil {
 		return nil, err
 	}
 	if perm.IsFile() && m == sp.OWRITE {
-		o.setupWriter()
+		o.setupWriter(ctx.Uuid())
 	}
 	return o, nil
 }
@@ -341,7 +380,7 @@ func (d *Dir) Remove(ctx fs.CtxI, name string, f sp.Tfence) *serr.Err {
 		Bucket: &d.bucket,
 		Key:    &k,
 	}
-	if _, err := fss3.client.DeleteObject(context.TODO(), input); err != nil {
+	if _, err := fss3.client[ctx.Uuid()].DeleteObject(context.TODO(), input); err != nil {
 		db.DPrintf(db.S3, "DeleteObject %v err %v\n", k, err)
 		return serr.MkErrError(err)
 	}

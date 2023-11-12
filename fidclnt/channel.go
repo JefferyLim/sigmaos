@@ -16,7 +16,7 @@ type Channel struct {
 	path  path.Path
 	qids  []*sp.Tqid
 	uname sp.Tuname
-    uuid  sp.Tuuid
+	uuid  sp.Tuuid
 }
 
 func makeChannel(pc *protclnt.ProtClnt, uname sp.Tuname, path path.Path, qs []*sp.Tqid, uuid sp.Tuuid) *Channel {
@@ -25,7 +25,7 @@ func makeChannel(pc *protclnt.ProtClnt, uname sp.Tuname, path path.Path, qs []*s
 	c.path = path
 	c.qids = qs
 	c.uname = uname
-    c.uuid = uuid
+	c.uuid = uuid
 	return c
 }
 
@@ -38,7 +38,7 @@ func (c *Channel) Uname() sp.Tuname {
 }
 
 func (c *Channel) Uuid() sp.Tuuid {
-    return c.uuid
+	return c.uuid
 }
 
 func (c *Channel) Path() path.Path {
@@ -56,7 +56,7 @@ func (c *Channel) Version() sp.TQversion {
 func (c *Channel) Copy() *Channel {
 	qids := make([]*sp.Tqid, len(c.qids))
 	copy(qids, c.qids)
-	return makeChannel(c.pc, c.uname, c.path.Copy(), qids,c.uuid)
+	return makeChannel(c.pc, c.uname, c.path.Copy(), qids, c.uuid)
 }
 
 func (c *Channel) add(name string, q *sp.Tqid) {
