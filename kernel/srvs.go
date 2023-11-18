@@ -148,7 +148,7 @@ func (k *Kernel) bootNamed() (*Subsystem, error) {
 }
 
 func (k *Kernel) bootAuthSrv() (*Subsystem, error) {
-	return k.bootSubsystemWithMcpu("authsrv", []string{k.Param.KernelId}, procclnt.HSCHEDD, 1000)
+	return k.bootSubsystem("authsrv", []string{k.Param.KernelId}, procclnt.HLINUX)
 }
 
 // Start uprocd in a sigmauser container and post the mount for

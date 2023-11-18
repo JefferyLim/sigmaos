@@ -3,12 +3,10 @@ package fdclnt
 import (
 	"fmt"
 
-	"sigmaos/authclnt"
 	db "sigmaos/debug"
 	"sigmaos/fidclnt"
 	"sigmaos/path"
 	"sigmaos/pathclnt"
-	"sigmaos/proc"
 	"sigmaos/reader"
 	"sigmaos/serr"
 	sp "sigmaos/sigmap"
@@ -43,30 +41,9 @@ func MakeFdClient(fsc *fidclnt.FidClnt, uname sp.Tuname, clntnet string, realm s
 	fdc.PathClnt = pathclnt.MakePathClnt(fsc, clntnet, realm, lip, sz)
 	fdc.fds = mkFdTable()
 	fdc.uname = uname
+    fdc.uuid = uuid
 
-	// Inherit the UUID from the caller
-	fdc.uuid = uuid
-
-	if proc.GetIsPrivilegedProc() == true || string(uname) == "kernel" {
-		// Temporary solution of establishing a privileged UUID
-		fdc.uuid = sp.Tuuid(string("priv"))
-	} else {
-		// non-Privileged procs must obtain a UUID through the authclnt
-		if string(uuid) == "" {
-			uuid, err := authclnt.Auth(string(uname))
-			if err == nil {
-				fdc.uuid = sp.Tuuid(uuid)
-
-				// Set the UUID as an environment variable
-				// This is to make passing UUID to children easier
-				// Ideally, one would pass it as a variable
-				proc.SetUuid(string(uuid))
-			}
-		}
-	}
-
-	// An empty uuid is not acceptable at this point, so we should probably create an error here
-	return fdc
+    return fdc
 }
 
 func (fdc *FdClient) String() string {

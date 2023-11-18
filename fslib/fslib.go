@@ -5,6 +5,7 @@ import (
 	"sigmaos/fdclnt"
 	"sigmaos/proc"
 	sp "sigmaos/sigmap"
+    "sigmaos/authclnt"
 )
 
 type FsLib struct {
@@ -14,10 +15,43 @@ type FsLib struct {
 
 func MakeFsLibAddrNet(uname sp.Tuname, realm sp.Trealm, lip string, addrs sp.Taddrs, clntnet string) (*FsLib, error) {
 	db.DPrintf(db.PORT, "MakeFsLibAddrRealm: uname %s lip %s addrs %v uuid %v\n", uname, lip, addrs, proc.GetUuid())
-	fl := &FsLib{
-		FdClient:  fdclnt.MakeFdClient(nil, uname, clntnet, realm, lip, sp.Tsize(10_000_000), sp.Tuuid(proc.GetUuid())),
+        
+    db.DPrintf(db.JEFF, "procdir: %v", proc.GetProcDir())
+    db.DPrintf(db.JEFF, "parentdir: %v", proc.GetParentDir())
+	
+    // Check for an inherited UUID
+    var uuid string
+    var err error
+    uuid = proc.GetUuid()
+
+	if proc.GetIsPrivilegedProc() == true || string(uname) == "kernel" {
+		// temporary solution of establishing a privileged uuid
+		uuid = "priv"
+	} else {
+		// non-privileged procs must obtain a uuid through the authclnt
+		if uuid  == "" {
+			uuid, err = authclnt.Auth(string(uname))
+
+			if err == nil {
+				// set the uuid as an environment variable
+				// this is to make passing uuid to children easier
+				// ideally, one would pass it as a variable
+				proc.SetUuid(string(uuid))
+			}else{
+                
+                db.DPrintf(db.JEFF, "wtf: %v, err %v", uuid, err)
+                return nil, err
+            }
+		}
+	}
+
+    db.DPrintf(db.JEFF, "uuid: %v", uuid)
+
+    fl := &FsLib{
+		FdClient:  fdclnt.MakeFdClient(nil, uname, clntnet, realm, lip, sp.Tsize(10_000_000), sp.Tuuid(uuid)),
 		namedAddr: addrs,
 	}
+
 	return fl, nil
 }
 

@@ -31,10 +31,10 @@ while [[ "$#" -gt 1 ]]; do
             BOOT="schedd;ux;s3;db;mongo"
             ;;
         "named")
-            BOOT="knamed"
+            BOOT="knamed;authsrv"
             ;;
         "realm")
-            BOOT="knamed;schedd;realmd;ux;s3;db;mongo;named"
+            BOOT="knamed;schedd;authsrv;realmd;ux;s3;db;mongo;named"
             ;;
         *)
             echo "unexpected argument $1 to boot"

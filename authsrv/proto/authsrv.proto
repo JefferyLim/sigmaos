@@ -28,10 +28,8 @@ message AuthResult {
 }
 
 message ValidRequest {
-  uint32 afid = 1;
-  uint32 fid = 2;
-  string uname = 3;
-  string aname = 4;
+  string uname = 1;
+  string uuid = 2;
 }
 
 message ValidResult {

@@ -84,51 +84,6 @@ func (ps *ProtSrv) Version(args *sp.Tversion, rets *sp.Rversion) *sp.Rerror {
 }
 
 func (ps *ProtSrv) Auth(args *sp.Tauth, rets *sp.Rauth) *sp.Rerror {
-	db.DPrintf(db.PROTSRV, "comparing %v vs %v", args.Tuname(), ps.ssrv.GetUname())
-	/*
-	       // Skip authenticating if the Tuname is the same
-	       if(args.Tuname() == ps.ssrv.GetUname()) {
-	           db.DPrintf(db.PROTSRV, "stop authenticating yourself %v", args.Tuname())
-	       }else{
-	           // if the rpc hasn't been setup
-	           if ps.tmp == 0 {
-	               fn := gopath.Join(sp.AUTHSRV, "jeff")
-
-	               sts, err := ps.sc.FsLib.GetDir(".")
-	               if err != nil {
-	                   db.DPrintf(db.JEFF, "getdir %v", err)
-	               }
-	               db.DPrintf(db.JEFF, "getdir result: %v", sts)
-
-	               // create a RPC client and query server
-	               rpcc, err := rpcclnt.MkRPCClnt([]*fslib.FsLib{ps.sc.FsLib}, fn)
-
-	               if(err != nil) {
-	                   db.DPrintf(db.JEFF, "rpc error: %v", err)
-	               }else{
-	                   ps.rpcc = rpcc
-	                   ps.tmp = 5
-	               }
-	           }
-
-	           if ps.tmp != 0 {
-	               echoReq := authstr.EchoRequest{Text: "Hello World!"}
-	   	        echoRes := authstr.EchoResult{}
-	               err := ps.rpcc.RPC("AuthSrv.Echo", &echoReq, &echoRes)
-	               db.DPrintf(db.PROTSRV, "Jeff: %v %v", err, echoRes)
-
-	       		authReq := authstr.AuthRequest{Fid: args.Afid, Uname: args.Uname, Aname: args.Aname}
-	       		authRes := authstr.AuthResult{}
-
-	   			err = ps.rpcc.RPC("AuthSrv.Auth", &authReq, &authRes)
-	               db.DPrintf(db.PROTSRV, "Jeff: %v %v", err, authRes)
-
-	   			rets.Aqid = authRes.Afid
-	           }
-	       }
-
-	   	return nil
-	*/
 	return sp.MkRerror(serr.MkErr(serr.TErrNotSupported, "Auth"))
 }
 
@@ -158,7 +113,14 @@ func (ps *ProtSrv) Attach(args *sp.Tattach, rets *sp.Rattach, attach sps.AttachC
 			res := authsrv.EchoResult{}
 			err := ps.rpcc.RPC("AuthSrv.Echo", &arg, &res)
 			db.DPrintf(db.PROTSRV, "Jeff: %v %v", err, res)
-		}
+		
+            valReq := authsrv.ValidRequest{Uname: args.Uname, Uuid: args.Uuid}
+			valRes := authsrv.ValidResult{}
+			err = ps.rpcc.RPC("AuthSrv.Validate", &valReq, &valRes)
+			db.DPrintf(db.PROTSRV, "Jeff: %v %v", err, valRes)
+
+
+        }
 	}
 
 	p := path.Split(args.Aname)

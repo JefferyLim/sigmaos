@@ -2,7 +2,6 @@ package authclnt
 
 import (
 	db "sigmaos/debug"
-	"sigmaos/serr"
 
 	"bytes"
 	"net"
@@ -12,14 +11,14 @@ import (
 	"golang.org/x/crypto/ssh/agent"
 )
 
-func Auth(uname string) (string, *serr.Err) {
+func Auth(uname string) (string, error) {
 
 	socket := os.Getenv("SSH_AUTH_SOCK")
 	db.DPrintf(db.JEFF, "authclnt/authclnt.go: %v", socket)
 	conn, err1 := net.Dial("unix", socket)
 	if err1 != nil {
 		db.DPrintf(db.JEFF, "authclnt/authclnt.go net.Dial: %v", err1)
-		return "", serr.MkErrError(err1)
+		return "", err1
 	}
 
 	username := uname
@@ -37,13 +36,13 @@ func Auth(uname string) (string, *serr.Err) {
 	sshc, err1 := ssh.Dial("tcp", "localhost:2222", config)
 	if err1 != nil {
 		db.DPrintf(db.JEFF, "authclnt/authclnt.go ssh.Dial: %v", err1)
-		return "", serr.MkErrError(err1)
+		return "", err1
 	}
 
 	session, err1 := sshc.NewSession()
 	if err1 != nil {
 		db.DPrintf(db.JEFF, "authclnt/authclnt.go sshc.NewSession: %v", err1)
-		return "", serr.MkErrError(err1)
+		return "", err1
 	}
 
 	var b bytes.Buffer
