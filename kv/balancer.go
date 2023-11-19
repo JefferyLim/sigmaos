@@ -104,7 +104,7 @@ func RunBalancer(job, crashhelper, kvdmcpu string, auto string, repl string) {
 	if err != nil {
 		db.DFatalf("StartMemFs %v\n", err)
 	}
-	ctx := ctx.MkCtx(KVBALANCER, 0, sp.NoClntId, nil, nil)
+	ctx := ctx.MkCtx(KVBALANCER, 0, sp.NoClntId, nil, nil, "")
 	root, _ := ssrv.Root(path.Path{})
 	err1 := dir.MkNod(ctx, root, "ctl", makeCtl(ctx, root, bl))
 	if err1 != nil {

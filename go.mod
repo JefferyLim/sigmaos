@@ -31,7 +31,9 @@ require (
 	github.com/bradfitz/gomemcache v0.0.0-20230124162541-5f7a7d875746
 	github.com/docker/docker v23.0.1+incompatible
 	github.com/docker/go-connections v0.4.0
+	github.com/gliderlabs/ssh v0.3.5
 	github.com/golang/protobuf v1.5.3
+	github.com/google/uuid v1.1.2
 	github.com/mit-pdos/go-geoindex v0.0.0-20230316114931-aab59857d7c8
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/opencontainers/runc v1.1.4
@@ -47,12 +49,14 @@ require (
 	go.opentelemetry.io/otel/exporters/jaeger v1.14.0
 	go.opentelemetry.io/otel/sdk v1.14.0
 	go.opentelemetry.io/otel/trace v1.14.0
+	golang.org/x/crypto v0.0.0-20220826181053-bd7e27e6170d
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.67
 )
 
 require (
 	github.com/Microsoft/go-winio v0.6.0 // indirect
+	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.1 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.11.2 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.3 // indirect
@@ -108,7 +112,6 @@ require (
 	go.opentelemetry.io/otel/metric v0.37.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
-	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
 	golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6 // indirect
 	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/net v0.8.0 // indirect
