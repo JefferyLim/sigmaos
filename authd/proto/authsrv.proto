@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "sigmaos/authsrv/proto";
+option go_package = "sigmaos/authd/proto";
 
 service AuthService {
   rpc Echo(EchoRequest) returns (EchoResult);

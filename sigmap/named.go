@@ -24,7 +24,7 @@ const (
 	DBD        = DB + "~any/"
 	MONGOREL   = "mongo"
 	MONGO      = NAMED + MONGOREL + "/"
-	AUTHSRVREL = "authsrv"
+	AUTHSRVREL = "authd"
 	AUTHSRV    = NAMED + AUTHSRVREL + "/"
 
 	UXBIN = UX + "~local/bin/"

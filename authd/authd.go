@@ -1,4 +1,4 @@
-package authsrv
+package authd
 
 import (
 	"path"
@@ -21,7 +21,7 @@ import (
 
 	"github.com/gliderlabs/ssh"
     
-    "sigmaos/authsrv/proto"
+    "sigmaos/authd/proto"
 	"context"
 	"github.com/aws/aws-sdk-go-v2/config"
 )

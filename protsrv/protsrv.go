@@ -2,7 +2,7 @@ package protsrv
 
 import (
 	gopath "path"
-	authsrv "sigmaos/authsrv/proto"
+	authd "sigmaos/authd/proto"
 	db "sigmaos/debug"
 	"sigmaos/ephemeralmap"
 	"sigmaos/fid"
@@ -109,13 +109,13 @@ func (ps *ProtSrv) Attach(args *sp.Tattach, rets *sp.Rattach, attach sps.AttachC
 		// There was a bug with the kernel proc where it was unable to make RPC requests
 		// This should have been resolved with kernel-auth-bug.patch
 		if ps.rpccOn == true {
-			arg := authsrv.EchoRequest{Text: "Hello World!"}
-			res := authsrv.EchoResult{}
+			arg := authd.EchoRequest{Text: "Hello World!"}
+			res := authd.EchoResult{}
 			err := ps.rpcc.RPC("AuthSrv.Echo", &arg, &res)
 			db.DPrintf(db.PROTSRV, "Jeff: %v %v", err, res)
 		
-            valReq := authsrv.ValidRequest{Uname: args.Uname, Uuid: args.Uuid}
-			valRes := authsrv.ValidResult{}
+            valReq := authd.ValidRequest{Uname: args.Uname, Uuid: args.Uuid}
+			valRes := authd.ValidResult{}
 			err = ps.rpcc.RPC("AuthSrv.Validate", &valReq, &valRes)
 			db.DPrintf(db.PROTSRV, "Jeff: %v %v", err, valRes)
 

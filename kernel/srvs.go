@@ -53,7 +53,7 @@ func (k *Kernel) BootSub(s string, args []string, p *Param, full bool) (proc.Tpi
 	case sp.UPROCDREL:
 		ss, err = k.bootUprocd(args)
 	case sp.AUTHSRVREL:
-		ss, err = k.bootAuthSrv()
+		ss, err = k.bootAuthd()
 	default:
 		err = fmt.Errorf("bootSub: unknown srv %s\n", s)
 	}
@@ -147,8 +147,8 @@ func (k *Kernel) bootNamed() (*Subsystem, error) {
 	return k.bootSubsystem("named", []string{sp.ROOTREALM.String(), "0"}, procclnt.HSCHEDD)
 }
 
-func (k *Kernel) bootAuthSrv() (*Subsystem, error) {
-	return k.bootSubsystem("authsrv", []string{k.Param.KernelId}, procclnt.HLINUX)
+func (k *Kernel) bootAuthd() (*Subsystem, error) {
+	return k.bootSubsystem("authd", []string{k.Param.KernelId}, procclnt.HLINUX)
 }
 
 // Start uprocd in a sigmauser container and post the mount for

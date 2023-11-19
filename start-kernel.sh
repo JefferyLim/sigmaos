@@ -25,16 +25,16 @@ while [[ "$#" -gt 1 ]]; do
     shift
     case "$1" in
         "all")
-            BOOT="knamed;schedd;authsrv;ux;s3;db;mongo;named"
+            BOOT="knamed;schedd;authd;ux;s3;db;mongo;named"
             ;;
         "node")
             BOOT="schedd;ux;s3;db;mongo"
             ;;
         "named")
-            BOOT="knamed;authsrv"
+            BOOT="knamed;authd"
             ;;
         "realm")
-            BOOT="knamed;schedd;authsrv;realmd;ux;s3;db;mongo;named"
+            BOOT="knamed;schedd;authdrealmd;ux;s3;db;mongo;named"
             ;;
         *)
             echo "unexpected argument $1 to boot"

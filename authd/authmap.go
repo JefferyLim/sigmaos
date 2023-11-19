@@ -1,4 +1,4 @@
-package authsrv
+package authd
 
 import (
 	"errors"

@@ -1,4 +1,4 @@
-package authsrv_test
+package authd_test
 
 import (
 	"bytes"
