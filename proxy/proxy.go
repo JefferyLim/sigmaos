@@ -15,6 +15,7 @@ import (
 	"sigmaos/sessstatesrv"
 	sp "sigmaos/sigmap"
 	sps "sigmaos/sigmaprotsrv"
+    "sigmaos/authclnt"
 )
 
 type Npd struct {
@@ -70,6 +71,7 @@ type NpConn struct {
 	mu    sync.Mutex
 	clnt  *protclnt.Clnt
 	uname sp.Tuname
+    uuid sp.Tuuid
 	fidc  *fidclnt.FidClnt
 	pc    *pathclnt.PathClnt
 	fm    *fidMap
@@ -83,6 +85,10 @@ func makeNpConn(lip string) *NpConn {
 	npc.pc = pathclnt.MakePathClnt(npc.fidc, sp.ROOTREALM.String(), sp.ROOTREALM, lip, sp.Tsize(1_000_000))
 	npc.fm = mkFidMap()
 	npc.cid = sp.TclntId(rand.Uint64())
+
+    uuid, _ := authclnt.Auth("test")
+    npc.uuid = sp.Tuuid(uuid)
+
 	return npc
 }
 
@@ -104,7 +110,7 @@ func (npc *NpConn) Attach(args *sp.Tattach, rets *sp.Rattach, attach sps.AttachC
 	npc.uname = sp.Tuname(u.Uid)
 
 	mnt := npc.pc.GetMntNamed("proxy", "")
-	fid, err := npc.fidc.Attach(npc.uname, npc.cid, mnt.Addr, "", "", "")
+	fid, err := npc.fidc.Attach(npc.uname, npc.cid, mnt.Addr, "", "", npc.uuid)
 	if err != nil {
 		db.DPrintf(db.PROXY, "Attach args %v err %v\n", args, err)
 		return sp.MkRerror(err)
