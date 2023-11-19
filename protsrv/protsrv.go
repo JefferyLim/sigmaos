@@ -95,7 +95,7 @@ func (ps *ProtSrv) Attach(args *sp.Tattach, rets *sp.Rattach, attach sps.AttachC
 		db.DPrintf(db.PROTSRV, "Privileged Attach, skipping verification")
 	} else {
 		if ps.rpccOn == false {
-			fn := gopath.Join(sp.AUTHSRV, "jeff")
+			fn := gopath.Join(sp.AUTHD, "jeff")
 			rpcc, err := rpcclnt.MkRPCClnt([]*fslib.FsLib{ps.sc.FsLib}, fn)
 			if err != nil {
 				db.DPrintf(db.JEFF, "protsrv/protsrv.go rpcclnt.MkRPCClnt: %v", err)

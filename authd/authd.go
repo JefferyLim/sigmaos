@@ -32,15 +32,10 @@ type AuthSrv struct {
 	kernelId string
 }
 
-func RunAuthSrv(kernelId string) error {
-	authsrv := &AuthSrv{}
-	authsrv.sid = rand.String(8)
-	authsrv.auths = mkAuthMap()
-	authsrv.kernelId = kernelId
+func RunAuthd(kernelId string, authsrv *AuthSrv) error {
+	db.DPrintf(db.AUTHD, "==%v== Creating authd service \n",  kernelId)
 
-	db.DPrintf(db.AUTHSRV, "==%v== Creating auth service \n", authsrv.sid)
-
-	mfs, err := memfssrv.MakeMemFs(path.Join(sp.AUTHSRV, "jeff"), sp.AUTHSRVREL)
+	mfs, err := memfssrv.MakeMemFs(path.Join(sp.AUTHD, "jeff"), sp.AUTHDREL)
 	if err != nil {
 		db.DFatalf("Error MakeMemFs: %v", err)
 	}
@@ -48,23 +43,36 @@ func RunAuthSrv(kernelId string) error {
 	ssrv, err := sigmasrv.MakeSigmaSrvMemFs(mfs, authsrv)
 	procclnt.MountPids(mfs.SigmaClnt().FsLib, ssrv.MemFs.SigmaClnt().NamedAddr())
 	if err != nil {
-		db.DPrintf(db.AUTHSRV, "%v", err)
+		db.DPrintf(db.AUTHD, "%v", err)
 	}
-	db.DPrintf(db.AUTHSRV, "==%v== Starting to run authsrv \n", authsrv.sid)
+
+	err = ssrv.RunServer()
+
+    return nil
+}
+
+
+func RunAuthSrv(kernelId string) (*AuthSrv, error) {
+	authsrv := &AuthSrv{}
+	authsrv.sid = rand.String(8)
+	authsrv.auths = mkAuthMap()
+	authsrv.kernelId = kernelId
+
+	db.DPrintf(db.AUTHD, "==%v== Starting to run authsrv \n", authsrv.sid)
 
     // This whole process takes around 15 seconds. Unsure how to speed it up
-	err = filepath.WalkDir("keys/", func(path string, di gofs.DirEntry, err error) error {
+    err := filepath.WalkDir("keys/", func(path string, di gofs.DirEntry, err error) error {
 		if !di.IsDir() {
 			authorizedKeysBytes, err := os.ReadFile(path)
 			if err != nil {
-				db.DPrintf(db.AUTHSRV, "Error reading %v", path)
+				db.DPrintf(db.AUTHD, "Error reading %v", path)
 			} else {
 				user := strings.Split(path, "/")
 				username := user[1]
 				
                 pubKey, _, _, _, err := ssh.ParseAuthorizedKey(authorizedKeysBytes)
 				if err != nil {
-					db.DPrintf(db.AUTHSRV, "Error parsing key %v", err)
+					db.DPrintf(db.AUTHD, "Error parsing key %v", err)
 				}
 
                 // Create the user in our struct
@@ -93,10 +101,8 @@ func RunAuthSrv(kernelId string) error {
 		return nil
 	})
 
-    db.DPrintf(db.JEFF, "DONE LAODING")
-
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// SSH handler function for when a user is authenticated
@@ -108,7 +114,7 @@ func RunAuthSrv(kernelId string) error {
 
 		uuid, err := authsrv.auths.createUUID(s.User())
 		if err == nil {
-			db.DPrintf(db.AUTHSRV, "UUID created: %v\n", uuid)
+			db.DPrintf(db.AUTHD, "UUID created: %v\n", uuid)
 		}
 		io.WriteString(s, fmt.Sprintf("%s", uuid))
 
@@ -116,7 +122,7 @@ func RunAuthSrv(kernelId string) error {
 
     publicKeyOption := ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
 		if authsrv.auths.authmap[ctx.User()].pubkey == string(key.Marshal()) {
-			db.DPrintf(db.AUTHSRV, "user login success: %v:%v", ctx.User(), key)
+			db.DPrintf(db.AUTHD, "user login success: %v:%v", ctx.User(), key)
 			return true
 		}
 
@@ -124,37 +130,24 @@ func RunAuthSrv(kernelId string) error {
 	})
 
 	go ssh.ListenAndServe(":2222", nil, publicKeyOption)
-
-	err = ssrv.RunServer()
-	return nil
+	
+    return authsrv, nil
 }
 
 // find meaning of life for request
 func (authsrv *AuthSrv) Echo(ctx fs.CtxI, req proto.EchoRequest, rep *proto.EchoResult) error {
-	db.DPrintf(db.AUTHSRV, "==%v== Received Echo Request: %v\n", authsrv.sid, req)
+	db.DPrintf(db.AUTHD, "==%v== Received Echo Request: %v\n", authsrv.sid, req)
 	rep.Text = req.Text
 	return nil
 }
 
 func (authsrv *AuthSrv) Auth(ctx fs.CtxI, req proto.AuthRequest, rep *proto.AuthResult) error {
-	db.DPrintf(db.AUTHSRV, "==%v== Received Auth Request: %v\n", authsrv.sid, req)
-
-	/*
-	   info, err := authsrv.auths.lookup(request)
-
-	   if(err != nil){
-	       rep.Afid = uint32(authsrv.auths.allocAuth(request))
-	       db.DPrintf(db.AUTHSRV, "==%v== Allocating Auth Request: %d\n", authsrv.sid, rep.Afid)
-	   }else{
-	       db.DPrintf(db.AUTHSRV, "==%v== Found AFID: %v\n", authsrv.sid, info)
-	       rep.Afid = uint32(info.afid)
-	   }
-	*/
+	db.DPrintf(db.AUTHD, "==%v== Received Auth Request: %v\n", authsrv.sid, req)
 	return nil
 }
 
 func (authsrv *AuthSrv) Validate(ctx fs.CtxI, req proto.ValidRequest, rep *proto.ValidResult) error {
-	db.DPrintf(db.AUTHSRV, "==%v== Received Validate Request: %v\n", authsrv.sid, req)
+	db.DPrintf(db.AUTHD, "==%v== Received Validate Request: %v\n", authsrv.sid, req)
 
     _, ok := authsrv.auths.lookupUuid(req.Uuid)
     if ok != nil {
@@ -168,14 +161,14 @@ func (authsrv *AuthSrv) Validate(ctx fs.CtxI, req proto.ValidRequest, rep *proto
 }
 
 func (authsrv *AuthSrv) GetAWS(ctx fs.CtxI, req proto.AWSRequest, rep *proto.AWSResult) error {
-	db.DPrintf(db.AUTHSRV, "==%v== Received AWS Request: %v\n", authsrv.sid, req)
+	db.DPrintf(db.AUTHD, "==%v== Received AWS Request: %v\n", authsrv.sid, req)
 
 	found, ok := authsrv.auths.lookupUuid(req.Uuid)
 	if ok == nil {
 		rep.Accesskeyid = found.aws_key
 		rep.Secretaccesskey = found.aws_secret
 		rep.Region = found.aws_region
-		db.DPrintf(db.AUTHSRV, "Found: %v\n", found)
+		db.DPrintf(db.AUTHD, "Found: %v\n", found)
 		return nil
 	}
 

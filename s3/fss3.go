@@ -51,7 +51,7 @@ func RunFss3(buckets []string) {
 
 	fss3.client = make(map[sp.Tuuid]*s3.Client)
 
-	fn := gopath.Join(sp.AUTHSRV, "jeff")
+	fn := gopath.Join(sp.AUTHD, "jeff")
 	sc := ssrv.SigmaClnt()
 	rpcc, err := rpcclnt.MkRPCClnt([]*fslib.FsLib{sc.FsLib}, fn)
 	if err != nil {

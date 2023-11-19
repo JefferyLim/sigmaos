@@ -52,7 +52,7 @@ func (k *Kernel) BootSub(s string, args []string, p *Param, full bool) (proc.Tpi
 		ss, err = k.bootRealmd()
 	case sp.UPROCDREL:
 		ss, err = k.bootUprocd(args)
-	case sp.AUTHSRVREL:
+	case sp.AUTHDREL:
 		ss, err = k.bootAuthd()
 	default:
 		err = fmt.Errorf("bootSub: unknown srv %s\n", s)

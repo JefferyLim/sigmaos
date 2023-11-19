@@ -12,7 +12,12 @@ func main() {
 		db.DFatalf("Usage :%v kernelId, %d", os.Args[0], len(os.Args))
 	}
 
-	if err := authd.RunAuthSrv(os.Args[1]); err != nil {
+    authsrv, err := authd.RunAuthSrv(os.Args[1])
+	if err != nil {
 		db.DFatalf("RunAuthSrv %v err %v\n", os.Args[0], err)
+	}
+
+	if err := authd.RunAuthd(os.Args[1], authsrv); err != nil {
+		db.DFatalf("RunAuthd %v err %v\n", os.Args[0], err)
 	}
 }
