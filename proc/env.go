@@ -143,6 +143,7 @@ func GetSigmaJaegerIP() string {
 	return os.Getenv(SIGMAJAEGERIP)
 }
 
+// Kernel Auth Patch
 func SetRealm(r sp.Trealm) {
 	os.Setenv(SIGMAREALM, r.String())
 }

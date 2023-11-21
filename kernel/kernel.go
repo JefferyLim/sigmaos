@@ -56,6 +56,8 @@ func MakeKernel(p *Param, nameds sp.Taddrs) (*Kernel, error) {
 	k := mkKernel(p, nameds)
 	proc.SetProgram(os.Args[0])
 	proc.SetPid(proc.GenPid())
+    // Kernel Auth Patch
+    proc.SetRealm(sp.ROOTREALM)
 	ip, err := container.LocalIP()
 	if err != nil {
 		return nil, err
