@@ -18,7 +18,7 @@ func main() {
 	ad.KernelId = os.Args[1]	
 	
 // Internal vs external authsrv
-	if(false){
+	if(true){
 		authmap, err := authd.RunAuthSrv(os.Args[1], "keys/")
 		if err != nil {
 			db.DFatalf("RunAuthSrv %v err %v\n", os.Args[0], err)

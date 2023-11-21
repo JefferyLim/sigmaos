@@ -40,12 +40,16 @@ func (a AuthUser) String() string {
 	return fmt.Sprintf("%s:%s:%s:%s:", a.uuid, a.aws_key, a.aws_secret, a.aws_region)
 }
 
-func (am *AuthMap) CreateUser(uname string, pubkey string) error {
+func (am *AuthMap) CreateUser(uname string, pubkey string, aws_key string, aws_secret string, aws_region string) error {
 	am.Lock()
 	defer am.Unlock()
 
 	user := AuthUser{}
 	user.pubkey = pubkey
+	user.aws_key = aws_key
+	user.aws_secret = aws_secret
+	user.aws_region = aws_region
+
 
 	_, ok := am.authmap[uname]
 	if ok {
@@ -110,6 +114,7 @@ func (am *AuthMap) UpdateUUID(uname string, uuid string) (string, error) {
 	return "", errors.New("Can't find uname")
 
 }
+
 func (am *AuthMap) CreateUUID(uname string) (string, error) {
 	am.Lock()
 	defer am.Unlock()
@@ -143,6 +148,7 @@ func (am *AuthMap) LookupUname(uname string) (AuthUser, error) {
 	return AuthUser{}, errors.New("Can't find uname")
 
 }
+
 func (am *AuthMap) LookupUuid(uuid string) (AuthUser, error) {
 	am.Lock()
 	defer am.Unlock()

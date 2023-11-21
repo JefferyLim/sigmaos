@@ -73,7 +73,7 @@ func RunAuthSrv(kernelId string, path string) (*AuthMap, error) {
 				}
 
 				// Create the user in our struct
-				err = authmap.CreateUser(username, string(pubKey.Marshal()))
+				err = authmap.CreateUser(username, string(pubKey.Marshal()),  "", "", "")
 				if err != nil {
 					return err
 				}
@@ -148,8 +148,8 @@ func (authd *Authd) Validate(ctx fs.CtxI, req proto.ValidRequest, rep *proto.Val
 		user,err := onlineSync(req.Uname)
 		
 		if err == nil {
-			authd.Auths.CreateUser(req.Uname, "")
-			authd.Auths.UpdateAWS(req.Uname, user.aws_key, user.aws_secret, user.aws_region)
+			// Do we want authd to have the public key?
+			authd.Auths.CreateUser(req.Uname, "", user.aws_key, user.aws_secret, user.aws_region)
 			authd.Auths.UpdateUUID(req.Uname, user.uuid)
 		
 			rep.Ok = true
@@ -186,11 +186,14 @@ func (authd *Authd) GetAWS(ctx fs.CtxI, req proto.AWSRequest, rep *proto.AWSResu
 func onlineSync(username string) (*AuthUser, error){
 	c, err := net.Dial("tcp", "localhost:4444")
 	if err != nil {
-		return nil, errors.New("uhoh")
+		return nil, errors.New("Unable to connect to online authsrv")
 	}
 
 	user := &AuthUser{}
 	
+	// Only one API call
+	// get:username:
+	// returns uuid:aws key:aws_secret:aws_region
 	text := "get:" + username + ":"
 	fmt.Fprintf(c, text+"\n")
 	
@@ -199,15 +202,12 @@ func onlineSync(username string) (*AuthUser, error){
 	info := strings.Split(message, ":")
 	
 	if(len(info) != 5){
-
-		return nil, errors.New("uhoh")
+		return nil, errors.New("Misformatted response")
 	}
 	user.uuid = info[0]
 	user.aws_key = info[1]
 	user.aws_secret = info[2]
 	user.aws_region = info[3]
-
-	fmt.Print("sresult: ",  message)
 
 	return user, nil
 	
