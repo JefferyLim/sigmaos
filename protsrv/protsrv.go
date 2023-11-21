@@ -111,16 +111,15 @@ func (ps *ProtSrv) Attach(args *sp.Tattach, rets *sp.Rattach, attach sps.AttachC
 		if ps.rpccOn == true {
 			arg := authd.EchoRequest{Text: "Hello World!"}
 			res := authd.EchoResult{}
-			err := ps.rpcc.RPC("AuthSrv.Echo", &arg, &res)
+			err := ps.rpcc.RPC("Authd.Echo", &arg, &res)
 			db.DPrintf(db.PROTSRV, "Jeff: %v %v", err, res)
-		
-            valReq := authd.ValidRequest{Uname: args.Uname, Uuid: args.Uuid}
+
+			valReq := authd.ValidRequest{Uname: args.Uname, Uuid: args.Uuid}
 			valRes := authd.ValidResult{}
-			err = ps.rpcc.RPC("AuthSrv.Validate", &valReq, &valRes)
+			err = ps.rpcc.RPC("Authd.Validate", &valReq, &valRes)
 			db.DPrintf(db.PROTSRV, "Jeff: %v %v", err, valRes)
 
-
-        }
+		}
 	}
 
 	p := path.Split(args.Aname)

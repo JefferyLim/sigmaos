@@ -3,7 +3,7 @@ package authd
 import (
 	"errors"
 	"sync"
-
+	"fmt"
 	"github.com/google/uuid"
 	sp "sigmaos/sigmap"
 )
@@ -14,7 +14,7 @@ type authReq struct {
 	aname string
 }
 
-type authUser struct {
+type AuthUser struct {
 	uuid   string
 	pubkey string
 
@@ -23,24 +23,28 @@ type authUser struct {
 	aws_region string
 }
 
-type authMap struct {
+type AuthMap struct {
 	sync.Mutex
-	authmap map[string]authUser
+	authmap map[string]AuthUser
 	uuidmap map[string]string
 }
 
-func mkAuthMap() *authMap {
-	am := &authMap{}
-	am.authmap = make(map[string]authUser)
+func MkAuthMap() *AuthMap {
+	am := &AuthMap{}
+	am.authmap = make(map[string]AuthUser)
 	am.uuidmap = make(map[string]string)
 	return am
 }
 
-func (am *authMap) createUser(uname string, pubkey string) error {
+func (a AuthUser) String() string {
+	return fmt.Sprintf("%s:%s:%s:%s:", a.uuid, a.aws_key, a.aws_secret, a.aws_region)
+}
+
+func (am *AuthMap) CreateUser(uname string, pubkey string) error {
 	am.Lock()
 	defer am.Unlock()
 
-	user := authUser{}
+	user := AuthUser{}
 	user.pubkey = pubkey
 
 	_, ok := am.authmap[uname]
@@ -52,7 +56,7 @@ func (am *authMap) createUser(uname string, pubkey string) error {
 	return nil
 }
 
-func (am *authMap) updateKey(uname string, pubkey string) error {
+func (am *AuthMap) UpdateKey(uname string, pubkey string) error {
 	am.Lock()
 	defer am.Unlock()
 
@@ -67,7 +71,7 @@ func (am *authMap) updateKey(uname string, pubkey string) error {
 
 }
 
-func (am *authMap) updateAWS(uname string, aws_key string, aws_secret string, aws_region string) error {
+func (am *AuthMap) UpdateAWS(uname string, aws_key string, aws_secret string, aws_region string) error {
 	am.Lock()
 	defer am.Unlock()
 
@@ -85,7 +89,28 @@ func (am *authMap) updateAWS(uname string, aws_key string, aws_secret string, aw
 
 }
 
-func (am *authMap) createUUID(uname string) (string, error) {
+func (am *AuthMap) UpdateUUID(uname string, uuid string) (string, error) {
+	am.Lock()
+	defer am.Unlock()
+
+	found, ok := am.authmap[uname]
+	if ok {
+		found.uuid = uuid
+		am.authmap[uname] = found
+
+		_, ok := am.uuidmap[found.uuid]
+		if ok {
+			return "", errors.New("UUID already exists in table")
+		} else {
+			am.uuidmap[found.uuid] = uname
+		}
+		return found.uuid, nil
+	}
+
+	return "", errors.New("Can't find uname")
+
+}
+func (am *AuthMap) CreateUUID(uname string) (string, error) {
 	am.Lock()
 	defer am.Unlock()
 
@@ -106,7 +131,7 @@ func (am *authMap) createUUID(uname string) (string, error) {
 	return "", errors.New("Can't find uname")
 
 }
-func (am *authMap) lookupUname(uname string) (authUser, error) {
+func (am *AuthMap) LookupUname(uname string) (AuthUser, error) {
 	am.Lock()
 	defer am.Unlock()
 
@@ -115,10 +140,10 @@ func (am *authMap) lookupUname(uname string) (authUser, error) {
 		return found, nil
 	}
 
-	return authUser{}, errors.New("Can't find uname")
+	return AuthUser{}, errors.New("Can't find uname")
 
 }
-func (am *authMap) lookupUuid(uuid string) (authUser, error) {
+func (am *AuthMap) LookupUuid(uuid string) (AuthUser, error) {
 	am.Lock()
 	defer am.Unlock()
 
@@ -130,47 +155,6 @@ func (am *authMap) lookupUuid(uuid string) (authUser, error) {
 		}
 	}
 
-	return authUser{}, errors.New("Can't find uuid")
+	return AuthUser{}, errors.New("Can't find uuid")
 }
 
-/*
-func (am * authMap) allocAuth(req authReq) sp.Tfid {
-    am.Lock()
-    defer am.Unlock()
-
-    afid := am.next
-    am.next += 1
-
-    info := authInfo{}
-    info.afid = afid
-    info.authenticated = false
-
-    am.authmap[req] = info
-
-    return afid
-}
-
-func (am * authMap) authenticate(req authReq) {
-    am.Lock()
-    defer am.Unlock()
-
-    if ai, ok := am.authmap[req]; ok {
-        ai.authenticated = true
-        am.authmap[req] = ai
-    }
-}
-
-func (am * authMap) lookup(req authReq) (authInfo, error) {
-    am.Lock()
-    defer am.Unlock()
-
-    // Search for info
-    found, ok := am.authmap[req]
-
-    if(ok) {
-        return found, nil
-    }
-
-    return  found, errors.New("authMap lookup failed")
-}
-*/

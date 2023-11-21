@@ -67,7 +67,7 @@ func (d *Dir) readRoot(ctx fs.CtxI) *serr.Err {
 		// Request authd for the AWS keys
 		arg := authd.AWSRequest{Uuid: string(ctx.Uuid())}
 		res := authd.AWSResult{}
-		err := fss3.rpcc.RPC("AuthSrv.GetAWS", &arg, &res)
+		err := fss3.rpcc.RPC("Authd.GetAWS", &arg, &res)
 
 		if err != nil {
 			return serr.MkErr(serr.TErrError, err)
