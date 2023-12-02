@@ -20,11 +20,15 @@ done
 
 for containerid in $(docker ps -a --format "{{.Names}}"); do
     if [[ $containerid == sigma-* ]] ; then
+        mkdir -p logs/$containerid
+
+        exec > logs/$containerid/log 2>&1
         echo "========== Logs for $containerid =========="
         if [[ $SORT == "sort" ]]; then 
             docker logs $containerid | sort -k 1
         else 
             docker logs $containerid
         fi
+        exec > /dev/tty 2>&1
     fi
 done
