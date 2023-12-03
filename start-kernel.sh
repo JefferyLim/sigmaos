@@ -146,6 +146,7 @@ CID=$(docker run -dit\
              -e SIGMADEBUG=${SIGMADEBUG}\
              -e SIGMANAMED=${SIGMANAMED}\
              -e reserveMcpu=${RMCPU}\
+             -e SIGMAROOTCA="${SIGMAROOTCA}"\
              sigmaos)
 
 if [ -z ${CID} ]; then

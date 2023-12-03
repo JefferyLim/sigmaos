@@ -31,6 +31,7 @@ const (
 	SIGMAJAEGERIP       = "SIGMAJAEGERIP"
 	SIGMAKERNEL         = "SIGMAKERNEL"
 	SIGMAUPROCD         = "SIGMAUPROCD"
+	SIGMAROOTCA         = "SIGMAROOTCA"
 )
 
 func GenPid() Tpid {
@@ -148,6 +149,10 @@ func GetNet() string {
 
 func GetUprocdPid() Tpid {
 	return Tpid(os.Getenv(SIGMAUPROCD))
+}
+
+func GetRootCA() string {
+	return os.Getenv(SIGMAROOTCA)
 }
 
 func GetBuildTag() string {

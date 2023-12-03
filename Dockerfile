@@ -23,6 +23,8 @@ RUN mkdir bin && \
     mkdir bin/linux
 # Copy some yaml files to the base image.
 COPY seccomp seccomp
+# TODO: find a better way of having the certs and private keys in sigmaos
+COPY certs certs
 ENV SIGMATAG=$tag
 
 # ========== user image ==========

@@ -2,14 +2,18 @@ package netclnt
 
 import (
 	"bufio"
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/base64"
 	"net"
+	"os"
 	"sync"
-
 	"time"
 
 	"sigmaos/container"
 	db "sigmaos/debug"
 	"sigmaos/delay"
+	"sigmaos/proc"
 	"sigmaos/serr"
 	"sigmaos/sessconnclnt"
 	"sigmaos/sessp"
@@ -80,8 +84,29 @@ func (nc *NetClnt) isClosed() bool {
 func (nc *NetClnt) connect(clntnet string, addrs sp.Taddrs) *serr.Err {
 	addrs = container.Rearrange(clntnet, addrs)
 	db.DPrintf(db.PORT, "NetClnt %v connect to any of %v, starting w. %v\n", clntnet, addrs, addrs[0])
+
+	cert, err := base64.StdEncoding.DecodeString(proc.GetRootCA())
+	if err != nil {
+		return serr.MkErr(serr.TErrError, "SIGMAROOTCA not set")
+	}
+
+	roots := x509.NewCertPool()
+	ok := roots.AppendCertsFromPEM([]byte(cert))
+	if !ok {
+		return serr.MkErr(serr.TErrError, "Unable to parse root certificate")
+	}
+
+	w := os.Stdout
+	config := &tls.Config{
+		RootCAs:      roots,
+		KeyLogWriter: w,
+		//InsecureSkipVerify: true,
+	}
+
 	for _, addr := range addrs {
-		c, err := net.DialTimeout("tcp", addr.Addr, sp.Conf.Session.TIMEOUT/10)
+		dialer := &net.Dialer{Timeout: sp.Conf.Session.TIMEOUT / 10}
+		c, err := tls.DialWithDialer(dialer, "tcp", addr.Addr, config)
+
 		db.DPrintf(db.PORT, "Dial %v addr.Addr %v\n", addr.Addr, err)
 		if err != nil {
 			continue

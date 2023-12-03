@@ -134,6 +134,7 @@ func (p *Proc) setBaseEnv() {
 	if p.Privileged {
 		p.AppendEnv("PATH", os.Getenv("PATH")) // inherit linux path from boot
 	}
+	p.AppendEnv(SIGMAROOTCA, GetRootCA())
 }
 
 // Finalize env details which can only be set once a physical machine has been

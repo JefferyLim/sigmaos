@@ -2,6 +2,7 @@ package netsrv
 
 import (
 	"bufio"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net"
@@ -28,9 +29,17 @@ type NetServer struct {
 func MakeNetServer(ss sps.SessServer, address string, m WriteF, u ReadF) *NetServer {
 	srv := &NetServer{sesssrv: ss, writefcall: m, readframe: u}
 
+	cert, err := tls.LoadX509KeyPair("certs/sigmaos.crt", "certs/sigmaos.key")
+	if err != nil {
+		db.DFatalf("LoadX509KeyPair error: %v", err)
+	}
+
+	config := &tls.Config{Certificates: []tls.Certificate{cert}}
+
 	// Create and start the main server listener
 	var l net.Listener
-	l, err := net.Listen("tcp", address)
+	//l, err := net.Listen("tcp", address)
+	l, err = tls.Listen("tcp", address, config)
 	if err != nil {
 		db.DFatalf("Listen error: %v", err)
 	}
