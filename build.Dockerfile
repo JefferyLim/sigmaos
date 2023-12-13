@@ -39,6 +39,7 @@ RUN mkdir bin && \
     mkdir bin/linux
 # Copy some yaml files to the base image.
 COPY seccomp seccomp
+COPY certs certs
 
 # Download go modules
 COPY go.mod ./

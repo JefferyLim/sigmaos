@@ -2,6 +2,7 @@ package container
 
 import (
 	"fmt"
+
 	"os"
 	"os/exec"
 	"path"
@@ -17,12 +18,25 @@ import (
 	"sigmaos/proc"
 	"sigmaos/seccomp"
 	sp "sigmaos/sigmap"
+
+	"io/ioutil"
+	"net"
+	"crypto/rand"
+	"crypto/rsa"
+    "crypto/x509"
+    "encoding/pem"
+	"math/big"
+	"crypto/x509/pkix"
+	"bytes"
+	"time"
+	
 )
 
 const (
 	OLD_ROOT_MNT  = "old_root"
 	APPARMOR_PROF = "docker-default"
 )
+
 
 func SetupIsolationEnv() error {
 	return nil
@@ -78,14 +92,106 @@ func finishIsolation() {
 	runtime.UnlockOSThread()
 }
 
+func createCerts() ([]byte, []byte, error) { 
+    	
+	certPEM := new(bytes.Buffer)
+	certPrivKeyPEM := new(bytes.Buffer)
+
+	cf, err := ioutil.ReadFile("certs/sigmaos.crt")
+	if err != nil {
+    	db.DPrintf(db.CONTAINER, "Error reading cert: %v", err)
+	}
+
+	cpb, _ := pem.Decode(cf)
+
+	ca, err := x509.ParseCertificate(cpb.Bytes)
+	db.DPrintf(db.TEST, "wtf ca: %v", ca)
+	if err != nil {
+    	db.DPrintf(db.CONTAINER, "Error parsing cert: %v", err)
+	}
+		
+	pemString, err := ioutil.ReadFile("certs/sigmaos.key")
+	if err != nil {
+    	db.DPrintf(db.CONTAINER, "Error reading key: %v", err)
+	}
+	block, _ := pem.Decode([]byte(pemString))
+	caPrivKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+
+    cert := &x509.Certificate{
+	    SerialNumber: big.NewInt(1658),
+		Subject: pkix.Name{
+	    	Organization:  []string{"MIT"},
+	    	Country:       []string{"US"},
+	    	Province:      []string{""},
+	    	Locality:      []string{"Massachusetts"},
+	    	StreetAddress: []string{""},
+	    	PostalCode:    []string{""},
+    	},
+	    IPAddresses:  []net.IP{net.IPv4(127, 0, 0, 1), net.IPv4(192,168,50,53), net.IPv6loopback},
+	    NotBefore:    time.Now(),
+	    NotAfter:     time.Now().AddDate(10, 0, 0),
+	    SubjectKeyId: []byte{1, 2, 3, 4, 6},
+	    ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+	    KeyUsage:     x509.KeyUsageDigitalSignature,
+    }
+   
+	certPrivKey, err := rsa.GenerateKey(rand.Reader, 4096)
+	if err != nil {
+		return certPEM.Bytes(), certPrivKeyPEM.Bytes(), err
+	} 
+
+	certBytes, err := x509.CreateCertificate(rand.Reader, cert, ca, &certPrivKey.PublicKey, caPrivKey)
+	if err != nil {
+		return certPEM.Bytes(), certPrivKeyPEM.Bytes(), err
+	}
+	
+	certOut, err := os.Create("certs/sigmaos.crt")
+	if err != nil {
+		db.DPrintf(db.CONTAINER, "Failed to create cert: %v", err)
+	}
+	pem.Encode(certOut, &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: certBytes,
+	})
+
+	if err := certOut.Close(); err != nil {
+		db.DPrintf(db.CONTAINER, "Failed to close cert: %v", err)
+	}
+
+	privKeyOut, err := os.Create("certs/sigmaos.key")
+	if err != nil {
+		db.DPrintf(db.CONTAINER, "Failed to create key: %v", err)
+	}
+	pem.Encode(privKeyOut, &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(certPrivKey),
+	})
+	if err := privKeyOut.Close(); err != nil {
+		db.DPrintf(db.CONTAINER, "Failed to close key: %v", err)
+
+	}
+	return certPEM.Bytes(), certPrivKeyPEM.Bytes(), nil
+
+}
+
 func jailProcess() error {
+
 	newRoot := jailPath(proc.GetPid())
 	// Create directories to use as mount points, as well as the new root directory itself.
-	for _, d := range []string{"", OLD_ROOT_MNT, "lib", "usr", "lib64", "etc", "sys", "dev", "proc", "seccomp", "bin", "bin2", "tmp", perf.OUTPUT_PATH, "cgroup"} {
+	for _, d := range []string{"", OLD_ROOT_MNT, "lib", "usr", "lib64", "etc", "sys", "dev", "proc", "seccomp", "bin", "bin2", "tmp", perf.OUTPUT_PATH, "cgroup", "certs"} 	  {
 		if err := os.Mkdir(path.Join(newRoot, d), 0700); err != nil {
 			db.DPrintf(db.ALWAYS, "failed to mkdir [%v]: %v", d, err)
 			return err
 		}
+	}
+
+	_, _, erg := createCerts()
+	db.DPrintf(db.TEST, "Create new certs %v", erg)
+
+	// Mount realm's certs directory as /certs
+	if err := syscall.Mount(path.Join(sp.SIGMAHOME, "certs"), "certs", "none", syscall.MS_BIND|syscall.MS_RDONLY, ""); err != nil {
+		db.DPrintf(db.ALWAYS, "failed to mount certs: %v", err)
+		return err
 	}
 	// Mount new file system as a mount point so we can pivot_root to it later
 	if err := syscall.Mount(newRoot, newRoot, "", syscall.MS_BIND|syscall.MS_REC, ""); err != nil {
@@ -97,6 +203,7 @@ func jailProcess() error {
 		db.DPrintf(db.ALWAYS, "failed to chdir to /: %v", err)
 		return err
 	}
+
 	// Mount /lib
 	if err := syscall.Mount("/lib", "lib", "none", syscall.MS_BIND|syscall.MS_RDONLY, ""); err != nil {
 		db.DPrintf(db.ALWAYS, "failed to mount /lib: %v", err)
@@ -125,6 +232,13 @@ func jailProcess() error {
 	// Mount realm's seccomp directory as /seccomp
 	if err := syscall.Mount(path.Join(sp.SIGMAHOME, "seccomp"), "seccomp", "none", syscall.MS_BIND|syscall.MS_RDONLY, ""); err != nil {
 		db.DPrintf(db.ALWAYS, "failed to mount seccomp: %v", err)
+		return err
+	}
+
+
+	// Mount realm's certs directory as /certs
+	if err := syscall.Mount(path.Join(sp.SIGMAHOME, "certs"), "certs", "none", syscall.MS_BIND|syscall.MS_RDONLY, ""); err != nil {
+		db.DPrintf(db.ALWAYS, "failed to mount certs: %v", err)
 		return err
 	}
 	// Mount cgroups.

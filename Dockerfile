@@ -14,7 +14,7 @@ ARG tag
 #  apt autoremove && \
 #  rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-RUN apk add --no-cache libseccomp gcompat libpthread-stubs musl-dev
+RUN apk add --no-cache libseccomp gcompat musl-dev
 
 WORKDIR /home/sigmaos
 RUN mkdir bin && \
